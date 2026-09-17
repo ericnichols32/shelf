@@ -1,0 +1,32 @@
+rules_version = '2';
+
+// Who can touch the collection.
+//
+// Reading is open to anyone. That is deliberate and it is the whole point of
+// the link: a shelf of records and books is not private, and making visitors
+// sign in to look at it would defeat the object.
+//
+// Writing belongs to one Google account and nobody else. Not "anyone signed
+// in" — one account, named below by its user id. This is the part that makes a
+// link safe to send: a stranger who opens the site, signs into their own Google
+// account and starts poking at the database is refused by Google's servers
+// before anything of yours is touched. The app hides the buttons too, but that
+// is a courtesy; this file is the actual lock.
+//
+// To find the id: sign in once on your own copy and the home page prints it.
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // One document per thing on the shelf — record, disc, book, set or game.
+    match /shelfItems/{itemId} {
+      allow read: if true;
+      allow write: if request.auth != null
+                   && request.auth.uid == 'PASTE_YOUR_UID_HERE';
+    }
+
+    // Nothing else in this project belongs to the collection, and Firestore
+    // denies what no rule allows, so there is no catch-all here on purpose:
+    // rules combine with OR, and a catch-all `if false` would close nothing
+    // while reading as though it did.
+  }
+}
