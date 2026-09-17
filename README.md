@@ -229,23 +229,39 @@ sign-in so the app knows you are you, and GitHub Pages to serve the site.
 
 ### 1. Firebase
 
-You already have a project from Blokus, so this reuses it. The collection lives
-in `shelfItems`, which nothing else touches.
+**Use a project of its own, not the Blokus one.** An earlier draft of this file
+said to share it, to save a signup. That was a bad trade: two unrelated apps in
+one project means one rules file holding both sets of rules, and every edit
+carries a chance of breaking the other app. A second project is free, takes a
+few minutes, and keeps the two entirely apart — different rules, different
+sign-in settings, and either can be wiped without touching the other.
 
-- **Security → Authentication → Sign-in method → Google → Enable.** Anonymous
-  sign-in is no longer enough: on a public site it would let any visitor write.
-- **Authentication → Settings → Authorized domains**, add
+At [console.firebase.google.com](https://console.firebase.google.com):
+
+- **Create a project.** Turn Google Analytics **off**; nothing here uses it. The
+  free Spark plan is enough and no card is needed.
+- **Firestore Database → Create database.** Standard edition, database ID
+  `(default)`, any US region, production mode. The location cannot be changed
+  later; the rules are replaced in a moment so the starting mode hardly matters.
+- **Authentication → Sign-in method → Google → Enable.** Pick your address as
+  the support email. Anonymous sign-in is deliberately *not* used: on a public
+  site it would let any visitor write.
+- **Authentication → Settings → Authorized domains → Add domain**, and add
   `ericnichols32.github.io`. Google sign-in redirects through this list and
-  **will** fail without it. (Blokus did not need this; it used anonymous
-  sign-in, which ignores the list.)
-- **Firestore Database → Rules.** Paste the `shelfItems` block from
-  `firestore.rules` *inside* the existing braces, below the Blokus rules — do
-  not replace what is there. Leave `PASTE_YOUR_UID_HERE` for the moment.
+  fails without it. (Blokus never needed this, because anonymous sign-in ignores
+  the list — this is the one real difference from that setup.)
+- **Project settings → General → Your apps → Web (`</>`)**, register the app,
+  and copy the four values out of the `firebaseConfig` block it shows.
 
 ### 2. Find your user id
 
 ```sh
-cp ../blokus-app/.env.local .env.local
+cp .env.example .env.local
+```
+
+Fill the four Firebase values into `.env.local`, then:
+
+```sh
 npm run dev
 ```
 
@@ -253,8 +269,10 @@ Open the app and press **Sign in to edit**. Because no owner is set yet, the
 home page prints your user id. Then:
 
 - put it in `.env.local` as `VITE_OWNER_UID=…`
-- put the same id into `firestore.rules`, replacing `PASTE_YOUR_UID_HERE`, and
-  publish the rules in the console
+- put the same id into `firestore.rules`, replacing `PASTE_YOUR_UID_HERE`, then
+  paste that whole file into **Firestore Database → Rules** in the console and
+  publish. With a project of its own there is nothing to merge around: the file
+  is the whole ruleset.
 
 Restart `npm run dev`. You can now edit; a signed-out visitor cannot.
 
