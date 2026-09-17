@@ -240,17 +240,26 @@ At [console.firebase.google.com](https://console.firebase.google.com):
 
 - **Create a project.** Turn Google Analytics **off**; nothing here uses it. The
   free Spark plan is enough and no card is needed.
-- **Firestore Database → Create database.** Standard edition, database ID
-  `(default)`, any US region, production mode. The location cannot be changed
-  later; the rules are replaced in a moment so the starting mode hardly matters.
-- **Authentication → Sign-in method → Google → Enable.** Pick your address as
-  the support email. Anonymous sign-in is deliberately *not* used: on a public
-  site it would let any visitor write.
-- **Authentication → Settings → Authorized domains → Add domain**, and add
-  `ericnichols32.github.io`. Google sign-in redirects through this list and
+- **Databases & Storage → Firestore → Create database.** Take *Firestore*,
+  under the **NoSQL** heading — not the *Storage* entry below it, which is file
+  storage this app never touches and whose page demands a pricing upgrade, which
+  is easy to read as "this project needs a paid plan". It doesn't.
+
+  Standard edition. Leave the database ID as `(default)`: the app calls
+  `getFirestore(app)`, which resolves to the default database, and a custom ID
+  leaves it connecting to something that isn't there — with an error that looks
+  like a permission failure rather than a missing database. Any US region;
+  **the location cannot be changed later**. Production mode, since test mode
+  expires after 30 days and the rules are replaced in step 3 anyway.
+- **Security → Authentication → Sign-in method → Google → Enable.** Pick your
+  address as the support email. Anonymous sign-in is deliberately *not* used: on
+  a public site it would let any visitor write.
+- **Security → Authentication → Settings → Authorized domains → Add domain**,
+  and add `ericnichols32.github.io`. Google sign-in redirects through this list and
   fails without it. (Blokus never needed this, because anonymous sign-in ignores
   the list — this is the one real difference from that setup.)
-- **Project settings → General → Your apps → Web (`</>`)**, register the app,
+- **Settings → Project settings → General → Your apps → Web (`</>`)**, register
+  the app,
   and copy the four values out of the `firebaseConfig` block it shows.
 
 ### 2. Find your user id
@@ -270,8 +279,8 @@ home page prints your user id. Then:
 
 - put it in `.env.local` as `VITE_OWNER_UID=…`
 - put the same id into `firestore.rules`, replacing `PASTE_YOUR_UID_HERE`, then
-  paste that whole file into **Firestore Database → Rules** in the console and
-  publish. With a project of its own there is nothing to merge around: the file
+  paste that whole file into **Databases & Storage → Firestore → Rules** in the
+  console and publish. With a project of its own there is nothing to merge around: the file
   is the whole ruleset.
 
 Restart `npm run dev`. You can now edit; a signed-out visitor cannot.
