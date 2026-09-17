@@ -281,7 +281,7 @@ function Account({ viewer }: { viewer: Viewer }) {
           Sign in to edit
         </button>
         <span className="account__note">
-          Anyone can look. Only the owner\u2019s account can change anything.
+          Anyone can look. Only the owner’s account can change anything.
         </span>
       </p>
     )
@@ -291,7 +291,7 @@ function Account({ viewer }: { viewer: Viewer }) {
     <p className="account">
       <span className="label">
         {viewer.name}
-        {viewer.isOwner ? '' : ' \u00b7 read only'}
+        {viewer.isOwner ? '' : ' · read only'}
       </span>
       <button className="btn btn--quiet" onClick={() => void signOut()}>
         Sign out

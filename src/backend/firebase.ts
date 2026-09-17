@@ -5,7 +5,6 @@
 // firestore.rules rather than here. Signing in is a deliberate act — see
 // backend/auth.ts — so an ordinary visitor carries no credential at all.
 
-import { initializeApp } from 'firebase/app'
 import {
   addDoc,
   collection,
@@ -16,14 +15,13 @@ import {
   updateDoc,
 } from 'firebase/firestore'
 import { normalise, type NewItem } from '../types'
-import { firebaseConfig } from './config'
+import { firebaseApp } from './app'
 import { byNewest, type Store } from './types'
 
 const COLLECTION = 'shelfItems'
 
 export function createCloudStore(): Store {
-  const app = initializeApp(firebaseConfig)
-  const db = getFirestore(app)
+  const db = getFirestore(firebaseApp())
   const items = collection(db, COLLECTION)
 
   return {

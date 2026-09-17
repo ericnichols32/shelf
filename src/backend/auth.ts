@@ -6,7 +6,6 @@
 // in firestore.rules, on Google's servers; this only mirrors the rule so that
 // buttons which would be refused are never offered.
 
-import { getApp } from 'firebase/app'
 import {
   GoogleAuthProvider,
   getAuth,
@@ -16,6 +15,7 @@ import {
   type User,
 } from 'firebase/auth'
 import { SIGNED_OUT, type Viewer } from '../viewer'
+import { firebaseApp } from './app'
 import { ownerUid } from './config'
 
 const toViewer = (user: User | null): Viewer =>
@@ -29,7 +29,7 @@ const toViewer = (user: User | null): Viewer =>
     : SIGNED_OUT
 
 export function watchViewer(listener: (viewer: Viewer) => void): () => void {
-  return onAuthStateChanged(getAuth(getApp()), (user) =>
+  return onAuthStateChanged(getAuth(firebaseApp()), (user) =>
     listener(toViewer(user)),
   )
 }
@@ -39,7 +39,7 @@ export async function signIn(): Promise<void> {
   // Ask which account rather than silently reusing whichever Google account
   // the browser happens to be signed into.
   provider.setCustomParameters({ prompt: 'select_account' })
-  await signInWithPopup(getAuth(getApp()), provider)
+  await signInWithPopup(getAuth(firebaseApp()), provider)
 }
 
-export const signOut = (): Promise<void> => firebaseSignOut(getAuth(getApp()))
+export const signOut = (): Promise<void> => firebaseSignOut(getAuth(firebaseApp()))
