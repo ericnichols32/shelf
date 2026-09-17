@@ -258,7 +258,9 @@ At [console.firebase.google.com](https://console.firebase.google.com):
   and add `ericnichols32.github.io`. Google sign-in redirects through this list and
   fails without it. (Blokus never needed this, because anonymous sign-in ignores
   the list — this is the one real difference from that setup.)
-- **Settings → Project settings → General → Your apps → Web (`</>`)**, register
+- **Settings → General**, then scroll to **Your apps** and click the web icon
+  (`</>`). There is no separate "Project settings" entry — the gear menu opens
+  straight onto these tabs, and General is the one that holds the apps. Register
   the app,
   and copy the four values out of the `firebaseConfig` block it shows.
 
