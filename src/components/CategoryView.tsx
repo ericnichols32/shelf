@@ -4,7 +4,7 @@ import { go } from '../route'
 import { useCanEdit } from '../edit'
 import type { Item, Status } from '../types'
 import ItemCard from './ItemCard'
-import { sortForMove } from '../reorder'
+import ArrangeList from './ArrangeList'
 
 export default function CategoryView({
   category,
@@ -57,7 +57,7 @@ export default function CategoryView({
       </header>
       <hr className="rule" />
 
-      {category.tagGroup && onThisSide.length > 0 && (
+      {category.tagGroup && onThisSide.length > 0 && !arranging && (
         <nav className="filters" aria-label={`Filter by ${category.tagGroup.label}`}>
           {[null, ...category.tagGroup.options].map((option) => {
             // A tag nothing on this side carries would only ever show an
@@ -81,55 +81,30 @@ export default function CategoryView({
         </nav>
       )}
 
-      {canEdit && shown.length > 1 && (
+      {canEdit && onThisSide.length > 1 && (
         <div className="arrange">
           <button
             className="btn btn--quiet"
             aria-pressed={arranging}
-            onClick={() => setArranging((a) => !a)}
+            onClick={() => {
+              // Arranging always works on the whole side. Reordering inside a
+              // filter means swapping with neighbours you cannot see, which
+              // looks like nothing happening.
+              setTag(null)
+              setArranging((a) => !a)
+            }}
           >
-            {arranging ? 'Done arranging' : 'Arrange'}
+            {arranging ? 'Done' : 'Arrange'}
           </button>
-          {arranging && (
-            <span className="label">
-              {tag ? 'Showing one tag \u2014 moves still apply to the whole list' : 'Drag-free: nudge each one along'}
-            </span>
-          )}
         </div>
       )}
 
-      {shown.length > 0 ? (
+      {arranging ? (
+        <ArrangeList items={onThisSide} onReorder={onReorder} />
+      ) : shown.length > 0 ? (
         <div className="feed">
           {shown.map((item, i) => (
-            <div key={item.id} className="feed__slot">
-              <ItemCard item={item} index={i} inert={arranging} />
-              {arranging && (
-                <div className="nudge">
-                  <button
-                    className="nudge__btn"
-                    aria-label="Move earlier"
-                    disabled={i === 0}
-                    onClick={() => {
-                      const sort = sortForMove(shown, i, i - 1)
-                      if (sort !== null) onReorder(item.id, sort)
-                    }}
-                  >
-                    &larr;
-                  </button>
-                  <button
-                    className="nudge__btn"
-                    aria-label="Move later"
-                    disabled={i === shown.length - 1}
-                    onClick={() => {
-                      const sort = sortForMove(shown, i, i + 1)
-                      if (sort !== null) onReorder(item.id, sort)
-                    }}
-                  >
-                    &rarr;
-                  </button>
-                </div>
-              )}
-            </div>
+            <ItemCard key={item.id} item={item} index={i} />
           ))}
         </div>
       ) : (

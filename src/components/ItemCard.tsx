@@ -6,16 +6,7 @@ import Cover from './Cover'
 /** Rotations cycle so a column of cards never repeats the same lean. */
 const TILTS = ['-0.9deg', '0.7deg', '-0.45deg', '1deg', '-0.7deg', '0.5deg']
 
-export default function ItemCard({
-  item,
-  index,
-  inert,
-}: {
-  item: Item
-  index: number
-  /** While the list is being arranged, tapping a card must not open it. */
-  inert?: boolean
-}) {
+export default function ItemCard({ item, index }: { item: Item; index: number }) {
   const category = byId(item.category)
   if (!category) return null
 
@@ -25,7 +16,6 @@ export default function ItemCard({
     <button
       className="card"
       style={{ ['--tilt' as string]: TILTS[index % TILTS.length] } as React.CSSProperties}
-      disabled={inert}
       onClick={() => go(`/i/${item.id}`)}
     >
       <span className={`card__frame ${item.cutout ? 'card__frame--bare' : ''}`}>

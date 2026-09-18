@@ -1190,11 +1190,10 @@ select {
 
 /* ---- arranging a list --------------------------------------------------- */
 
+/* Sits under the rule, pushed to its right end. */
 .arrange {
   display: flex;
-  align-items: center;
-  flex-wrap: wrap;
-  gap: 8px 14px;
+  justify-content: flex-end;
   padding-top: 14px;
 }
 
@@ -1203,35 +1202,72 @@ select {
   border-color: var(--accent);
 }
 
-.feed__slot {
-  position: relative;
+
+/* ---- arranging: the list as plain lines --------------------------------- */
+
+.arrangelist {
+  list-style: none;
+  margin: 22px 0 0;
+  padding: 0;
+  border-top: 1px solid var(--sand);
 }
 
-.nudge {
+.arrangerow {
   display: flex;
-  gap: 8px;
-  margin-top: 10px;
+  align-items: center;
+  gap: 12px;
+  height: 52px;
+  padding: 0 2px;
+  border-bottom: 1px solid var(--sand);
+  background: var(--paper);
+  /* Rows slide out of the way as one is dragged past them. The dragged row
+     itself is moved every frame, so it opts out below. */
+  transition: transform 0.14s ease;
 }
 
-.nudge__btn {
-  flex: 1;
-  height: 36px;
+.arrangerow--lifted {
+  position: relative;
+  z-index: 5;
+  background: var(--raised);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow-float);
+  transition: none;
+}
+
+.arrangerow__grip {
+  width: 34px;
+  height: 100%;
   display: grid;
   place-items: center;
-  background: var(--raised);
-  border: 1px solid var(--sand-deep);
-  border-radius: 999px;
-  color: var(--ink);
+  color: var(--faint);
   font-size: 15px;
-  transition: border-color 0.15s ease, color 0.15s ease, opacity 0.15s ease;
+  cursor: grab;
+  /* Without this a drag on a touch screen scrolls the page instead. The rest
+     of the row keeps normal touch behaviour so the list can still be scrolled. */
+  touch-action: none;
 }
 
-.nudge__btn:hover:not(:disabled) {
-  border-color: var(--accent);
+.arrangerow__grip:active {
+  cursor: grabbing;
   color: var(--accent);
 }
 
-.nudge__btn:disabled {
-  opacity: 0.28;
-  cursor: default;
+.arrangerow__text {
+  flex: 1;
+  min-width: 0;
+  font-size: 15.5px;
+  color: var(--muted);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.arrangerow__text b {
+  color: var(--ink);
+  font-weight: 600;
+}
+
+.arrangerow__n {
+  flex: none;
+  color: var(--faint);
 }
