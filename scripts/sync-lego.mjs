@@ -26,25 +26,15 @@
 // SHELF_SERVICE_ACCOUNT (a path). Reading needs nothing: the collection is
 // public on purpose, so a dry run works with no key at all.
 
-import { access, readFile } from 'node:fs/promises'
 import { pathToFileURL } from 'node:url'
+import { UA, cents, clean as cleanName, log, openFirestore, readShelf } from './lib.mjs'
 
 const WISHLIST_ID = '7e749c7c-7da9-480d-a3cd-b6168ff4ad8e'
-const PROJECT = 'eric-s-wish-list'
 const SOURCE = 'lego-wishlist'
 const DRY = process.argv.includes('--dry-run')
-const UA =
-  'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/128.0 Safari/537.36'
 
-const log = (...a) => console.log(new Date().toISOString(), ...a)
-
-/** Trademark marks and stray zero-width characters out of LEGO's names. */
-const clean = (s) =>
-  (s ?? '')
-    .replace(/[™®​‌‍﻿]/g, '')
-    .replace(/^LEGO\s+/i, '')
-    .replace(/\s+/g, ' ')
-    .trim()
+/** The shared clean-up, plus LEGO's habit of prefixing its own name. */
+const clean = (s) => cleanName(s).replace(/^LEGO\s+/i, '').trim()
 
 // ---- 1. LEGO ---------------------------------------------------------------
 
@@ -90,37 +80,6 @@ async function fetchWishlist() {
   }))
 }
 
-// ---- 2. Firestore, read ------------------------------------------------------
-
-/** The LEGO shelf as it stands, read the same way any visitor could. */
-async function readShelf() {
-  const out = []
-  let page = ''
-  do {
-    const url =
-      `https://firestore.googleapis.com/v1/projects/${PROJECT}/databases/(default)/documents/shelfItems` +
-      `?pageSize=300${page ? `&pageToken=${page}` : ''}`
-    const res = await fetch(url)
-    if (!res.ok) throw new Error(`Firestore answered HTTP ${res.status}`)
-    const body = await res.json()
-    for (const d of body.documents ?? []) {
-      const f = d.fields ?? {}
-      const v = (k) => f[k]?.stringValue ?? ''
-      if (v('category') !== 'lego') continue
-      const price = f.price?.integerValue ?? f.price?.doubleValue
-      out.push({
-        id: d.name.split('/').pop(),
-        status: v('status'),
-        code: v('detail'),
-        source: v('source'),
-        price: price == null ? null : Number(price),
-      })
-    }
-    page = body.nextPageToken ?? ''
-  } while (page)
-  return out
-}
-
 // ---- 3. what to change -------------------------------------------------------
 
 export function plan(wishlist, shelf) {
@@ -148,8 +107,6 @@ export function plan(wishlist, shelf) {
   }
 }
 
-const exists = (p) => access(p).then(() => true, () => false)
-
 /**
  * LEGO's picture, asked for at a sensible size. fit=bounds matters: without it
  * their image server stretches the picture to fill exactly the width asked for
@@ -157,23 +114,6 @@ const exists = (p) => access(p).then(() => true, () => false)
  */
 const pictureUrl = (image) =>
   `${image}?format=webply&fit=bounds&quality=80&width=800`
-
-// ---- 5. Firestore, write -------------------------------------------------------
-
-async function openFirestore() {
-  const keyPath = process.env.SHELF_SERVICE_ACCOUNT
-  if (!keyPath) throw new Error('SHELF_SERVICE_ACCOUNT is not set — see the README')
-  const { initializeApp, cert } = await import('firebase-admin/app')
-  const { getFirestore } = await import('firebase-admin/firestore')
-  if (!(await exists(keyPath))) {
-    throw new Error(
-      `No service-account key at ${keyPath}. Reading LEGO worked; writing ` +
-        'needs the key — see "LEGO wish list" in the README.',
-    )
-  }
-  const key = JSON.parse(await readFile(keyPath, 'utf8'))
-  return getFirestore(initializeApp({ credential: cert(key) }))
-}
 
 const toItem = (set) => ({
   category: 'lego',
@@ -199,7 +139,7 @@ async function main() {
   log(DRY ? 'dry run — nothing will change' : 'syncing')
 
   const wishlist = await fetchWishlist()
-  const shelf = await readShelf()
+  const shelf = await readShelf('lego')
   log(`LEGO wish list: ${wishlist.length} sets · LEGO shelf here: ${shelf.length} items`)
 
   const { add, remove, reprice } = plan(wishlist, shelf)
@@ -214,7 +154,6 @@ async function main() {
 
   for (const s of add) log(`  + ${s.code}  ${s.name}  [${s.theme || '—'}]`)
   for (const i of remove) log(`  − ${i.code}  (left the LEGO wish list)`)
-  const cents = (c) => (c == null ? '—' : `$${(c / 100).toFixed(2)}`)
   for (const r of reprice) log(`  $ ${r.code}  ${cents(r.from)} → ${cents(r.to)}`)
   if (!add.length && !remove.length && !reprice.length) log('  nothing to change')
 

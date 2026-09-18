@@ -1,0 +1,37 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<!--
+  Syncs the LEGO and Nintendo wish lists, once an hour.
+
+  Hourly rather than daily so that a Nintendo link pasted into the site shows
+  up within the hour. Each run is one small request to each shop, and the two
+  run independently: one failing does not stop the other.
+
+  Asleep, the Mac catches up on waking; off, it resumes when switched on. Every
+  run compares the whole list, so a missed run loses nothing.
+
+  Installed by scripts/install-sync.sh. Log: ~/Library/Logs/shelf-sync.log
+-->
+<plist version="1.0">
+<dict>
+  <key>Label</key>
+  <string>com.ericnichols.shelf-sync</string>
+
+  <key>ProgramArguments</key>
+  <array>
+    <string>/bin/zsh</string>
+    <string>-lc</string>
+    <string>cd "$HOME/Code/shelf"; export SHELF_SERVICE_ACCOUNT="$HOME/.config/shelf/service-account.json"; node scripts/sync-lego.mjs; node scripts/sync-nintendo.mjs</string>
+  </array>
+
+  <key>StartInterval</key>
+  <integer>3600</integer>
+  <key>RunAtLoad</key>
+  <true/>
+
+  <key>StandardOutPath</key>
+  <string>/Users/ericnichols/Library/Logs/shelf-sync.log</string>
+  <key>StandardErrorPath</key>
+  <string>/Users/ericnichols/Library/Logs/shelf-sync.log</string>
+</dict>
+</plist>

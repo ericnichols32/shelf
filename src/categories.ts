@@ -223,7 +223,9 @@ export const CATEGORIES: Category[] = [
     creatorHint: 'Nintendo',
     detailLabel: 'Format',
     detailHint: 'Game-Key Card',
-    ratio: 2 / 3,
+    // Square, to match Nintendo's own cover art: the synced games come with
+    // square key art, and a tall frame would crop the sides off every one.
+    ratio: 1,
     tagGroup: {
       label: 'Console',
       options: ['Nintendo Switch', 'Nintendo Switch 2'],

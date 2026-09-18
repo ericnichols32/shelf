@@ -324,10 +324,11 @@ collection. Add it to the home screen if you want it to behave like an app.
 To run a local copy against the network instead, `npm run dev -- --host` and use
 the address it prints.
 
-## LEGO wish list, synced daily
+## LEGO and Nintendo wish lists, synced hourly
 
-The LEGO wish list here is a mirror of your wish list on LEGO.com. Once a day,
-`scripts/sync-lego.mjs` reads it and:
+The LEGO wish list here mirrors your wish list on LEGO.com, and the Video Games
+wish list mirrors your Nintendo one. Every hour `scripts/sync-lego.mjs` and
+`scripts/sync-nintendo.mjs` read them and:
 
 - **adds** any set that is new on LEGO — name, set number, theme, a link to the
   product page, and LEGO's own picture
@@ -345,9 +346,9 @@ gets a 403, while an ordinary home connection gets the list. That is LEGO's
 rule and the script does not try to get round it — from your Mac it is no
 different from opening the wish list in a browser once a day.
 
-So it is a macOS scheduled job, run at 9am. Asleep at 9, it runs on waking;
-switched off, the day is skipped and the next run catches up, because it always
-compares the whole list.
+So it is a macOS scheduled job, run hourly. Asleep, it catches up on waking;
+switched off, it resumes when switched on — every run compares the whole list,
+so a missed one loses nothing. Nintendo's API has the same arrangement.
 
 ### The pictures
 
@@ -378,7 +379,7 @@ script act as the project's administrator.
 3. Run it once to check:
 
    ```sh
-   zsh scripts/install-lego-sync.sh --now
+   zsh scripts/install-sync.sh --now
    ```
 
 **Treat that key like a password.** It can do anything to the database,
@@ -390,9 +391,33 @@ Other commands:
 
 ```sh
 node scripts/sync-lego.mjs --dry-run        # say what would change, change nothing
-zsh scripts/install-lego-sync.sh --remove   # stop the daily sync for good
-tail -50 ~/Library/Logs/shelf-lego-sync.log # what it did recently
+node scripts/sync-nintendo.mjs --dry-run    # same, for Nintendo
+zsh scripts/install-sync.sh --remove        # stop both syncs for good
+tail -50 ~/Library/Logs/shelf-sync.log      # what they did recently
 ```
+
+### Nintendo is a snapshot, not a live list
+
+Nintendo's share link has the games written into the link itself
+(`…/share/#skus=7100112715,7100098088,…`), and it never changes afterwards —
+Nintendo's own page calls it "a snapshot of my Wish List". So there is nothing
+live to watch the way there is with LEGO.
+
+When your Nintendo wish list changes, share it again on Nintendo's site and
+paste the new link into **Video Games → + → Paste a list** — the box at the
+top. It's saved in Firestore (`settings/nintendo`), and the next hourly run adds
+the new games and removes the dropped ones. Prices update every hour regardless.
+
+Each game arrives with its title, publisher, release year, price, a link to its
+store page, Nintendo's square cover, and its console — Nintendo Switch or
+Nintendo Switch 2 — which is exactly the shelf's Console tag, so the filters
+work with no setup.
+
+Two quirks the script handles: Nintendo's API only answers requests carrying an
+`apollographql-client-name` header (without it, every request is a 500), and it
+now and then answers "Unauthorized" with no data, then works seconds later — so
+each request is tried three times before a run gives up, and giving up changes
+nothing.
 
 The LEGO **Collection** is not synced — there is no public list of what you own.
 Five sets are in `src/prepared.ts`, loaded from the LEGO *Paste a list* screen.

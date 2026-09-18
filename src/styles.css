@@ -1319,3 +1319,60 @@ select {
 .cathead__count {
   margin: 0 0 14px;
 }
+
+/* ---- the Nintendo wish list link ---------------------------------------- */
+
+.nintendo {
+  padding: 18px;
+  margin: 0 0 30px;
+  background: var(--raised);
+  border: 1px solid var(--sand);
+  border-radius: var(--radius);
+}
+
+.nintendo__lead {
+  margin: 8px 0 6px;
+  font-family: var(--display);
+  font-size: 18px;
+  letter-spacing: -0.01em;
+  color: var(--ink);
+}
+
+.nintendo__how {
+  margin: 0 0 14px;
+  font-size: 14.5px;
+  color: var(--muted);
+  line-height: 1.5;
+}
+
+.nintendo__how b {
+  color: var(--ink);
+  font-weight: 600;
+}
+
+.nintendo__row {
+  display: flex;
+  gap: 10px;
+}
+
+.nintendo__row input {
+  flex: 1;
+  min-width: 0;
+  background: var(--paper);
+  border: 1px solid var(--sand-deep);
+  border-radius: 999px;
+  padding: 10px 16px;
+  font-size: 14px;
+  outline: none;
+}
+
+.nintendo__row input:focus {
+  border-color: var(--accent);
+}
+
+.nintendo__note {
+  margin: 10px 0 0;
+  min-height: 20px;
+  font-size: 13.5px;
+  color: var(--accent);
+}

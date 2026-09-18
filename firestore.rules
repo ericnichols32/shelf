@@ -24,6 +24,15 @@ service cloud.firestore {
                    && request.auth.uid == 'GoOZIX655TcROUZTpRhVVUVuuCz2';
     }
 
+    // Settings the app keeps — so far, the Nintendo wish list link the sync
+    // reads. Private to the owner: nobody else needs to see or change it. The
+    // sync itself reads it with the service-account key, which the rules
+    // don't apply to.
+    match /settings/{name} {
+      allow read, write: if request.auth != null
+                         && request.auth.uid == 'GoOZIX655TcROUZTpRhVVUVuuCz2';
+    }
+
     // Nothing else in this project belongs to the collection, and Firestore
     // denies what no rule allows, so there is no catch-all here on purpose:
     // rules combine with OR, and a catch-all `if false` would close nothing

@@ -2,6 +2,8 @@ import { useState } from 'react'
 import type { Category } from '../categories'
 import { canLookUp, lookup } from '../lookup'
 import { PREPARED } from '../prepared'
+import { cloudConfigured } from '../backend/config'
+import NintendoLink from './NintendoLink'
 import { go } from '../route'
 import { EMPTY_ITEM, type Item, type NewItem, type Status } from '../types'
 
@@ -207,6 +209,11 @@ export default function ImportList({
     <div className="form">
       <span className="label">{category.name}</span>
       <h1 className="form__title">Paste a list</h1>
+
+      {/* Video games mostly arrive from Nintendo, so its link comes first. */}
+      {rows === null && category.id === 'switch' && cloudConfigured && (
+        <NintendoLink />
+      )}
 
       {rows === null ? (
         <>
