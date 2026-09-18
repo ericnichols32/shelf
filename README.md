@@ -330,7 +330,7 @@ The LEGO wish list here is a mirror of your wish list on LEGO.com. Once a day,
 `scripts/sync-lego.mjs` reads it and:
 
 - **adds** any set that is new on LEGO — name, set number, theme, a link to the
-  product page, and LEGO's own picture with its background cut out
+  product page, and LEGO's own picture
 - **removes** a set this script added once it has left your LEGO wish list
 
 It never touches anything else. A set you move to the **Collection** is kept
@@ -349,12 +349,17 @@ So it is a macOS scheduled job, run at 9am. Asleep at 9, it runs on waking;
 switched off, the day is skipped and the next run catches up, because it always
 compares the whole list.
 
-### Why the pictures are copied into the site
+### The pictures
 
-LEGO's image server will not let a browser read its pixels, and reading them is
-how a background gets cut out. So the script downloads each picture into
-`public/lego/` and pushes it, and the site serves it from its own address. The
-cut-out then works exactly as it does for the Blu-rays.
+LEGO's own product pictures, linked straight from LEGO. They already come with
+a transparent background and a tight frame, so there is nothing to cut out and
+nothing to copy.
+
+(An earlier version copied every picture into the site so the cut-out could run
+on it — LEGO's image server refuses to let a browser read its pixels. It turned
+out they never needed cutting out, and the copies were distorted besides:
+without `fit=bounds`, LEGO's server stretches a picture to fill the exact size
+asked for. Both are gone.)
 
 ### Setting it up
 
@@ -385,7 +390,6 @@ Other commands:
 
 ```sh
 node scripts/sync-lego.mjs --dry-run        # say what would change, change nothing
-node scripts/sync-lego.mjs --pictures-only  # just fetch missing pictures
 zsh scripts/install-lego-sync.sh --remove   # stop the daily sync for good
 tail -50 ~/Library/Logs/shelf-lego-sync.log # what it did recently
 ```

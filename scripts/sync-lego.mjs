@@ -12,31 +12,27 @@
 //   2. read the LEGO shelf from Firestore
 //   3. add sets that are new on LEGO; remove ones this script added that have
 //      since left the LEGO list and are still only wanted
-//   4. download each new set's picture into public/lego/, so the site serves it
-//      from its own address and can cut out the background like any other cover
-//   5. commit and push the new pictures, which redeploys the site
+//
+// Pictures are LEGO's own, linked rather than copied. They already come with a
+// transparent background and a tight frame, so there is nothing to cut out —
+// an earlier version copied them into the site to run the cut-out on them,
+// which was solving a problem they never had.
 //
 // Usage:
 //   node scripts/sync-lego.mjs              # the real thing
 //   node scripts/sync-lego.mjs --dry-run    # say what it would do, change nothing
-//   node scripts/sync-lego.mjs --pictures-only   # just fetch missing pictures
 //
 // Writing needs a Firebase service-account key, found through
 // SHELF_SERVICE_ACCOUNT (a path). Reading needs nothing: the collection is
 // public on purpose, so a dry run works with no key at all.
 
-import { execFileSync } from 'node:child_process'
-import { access, readFile, writeFile } from 'node:fs/promises'
-import { dirname, join } from 'node:path'
-import { fileURLToPath, pathToFileURL } from 'node:url'
+import { access, readFile } from 'node:fs/promises'
+import { pathToFileURL } from 'node:url'
 
-const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..')
 const WISHLIST_ID = '7e749c7c-7da9-480d-a3cd-b6168ff4ad8e'
 const PROJECT = 'eric-s-wish-list'
 const SOURCE = 'lego-wishlist'
 const DRY = process.argv.includes('--dry-run')
-/** Fetch any missing pictures and stop: no Firestore, no commit. */
-const PICTURES_ONLY = process.argv.includes('--pictures-only')
 const UA =
   'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/128.0 Safari/537.36'
 
@@ -128,23 +124,15 @@ export function plan(wishlist, shelf) {
   }
 }
 
-// ---- 4. pictures ---------------------------------------------------------------
-
 const exists = (p) => access(p).then(() => true, () => false)
 
-async function downloadPicture(set) {
-  const file = join(ROOT, 'public', 'lego', `${set.code}.png`)
-  if (await exists(file)) return false
-  // fit=bounds matters: without it LEGO's image server stretches the picture to
-  // fill the exact width and height asked for, squashing every set that isn't
-  // square. With it, the picture is scaled to fit inside them, shape intact.
-  const res = await fetch(`${set.image}?fit=bounds&format=png&width=800&height=800`, {
-    headers: { 'user-agent': UA },
-  })
-  if (!res.ok) throw new Error(`picture for ${set.code}: HTTP ${res.status}`)
-  await writeFile(file, Buffer.from(await res.arrayBuffer()))
-  return true
-}
+/**
+ * LEGO's picture, asked for at a sensible size. fit=bounds matters: without it
+ * their image server stretches the picture to fill exactly the width asked for
+ * and squashes anything that isn't square.
+ */
+const pictureUrl = (image) =>
+  `${image}?format=webply&fit=bounds&quality=80&width=800`
 
 // ---- 5. Firestore, write -------------------------------------------------------
 
@@ -171,9 +159,7 @@ const toItem = (set) => ({
   year: '',
   detail: set.code,
   tag: '',
-  // Served from the site itself, so the browser may read its pixels and cut the
-  // background out. LEGO's own image server forbids that.
-  cover: `/shelf/lego/${set.code}.png`,
+  cover: pictureUrl(set.image),
   cutout: true,
   ref: '',
   link: set.link,
@@ -188,14 +174,6 @@ async function main() {
   log(DRY ? 'dry run — nothing will change' : 'syncing')
 
   const wishlist = await fetchWishlist()
-
-  if (PICTURES_ONLY) {
-    let n = 0
-    for (const s of wishlist) if (await downloadPicture(s)) n++
-    log(`downloaded ${n} picture(s); ${wishlist.length - n} were already here`)
-    return
-  }
-
   const shelf = await readShelf()
   log(`LEGO wish list: ${wishlist.length} sets · LEGO shelf here: ${shelf.length} items`)
 
@@ -213,20 +191,7 @@ async function main() {
   for (const i of remove) log(`  − ${i.code}  (left the LEGO wish list)`)
   if (!add.length && !remove.length) log('  nothing to change')
 
-  let newPictures = 0
-  for (const s of wishlist) {
-    if (DRY) continue
-    if (await downloadPicture(s)) newPictures++
-  }
-
-  if (DRY) {
-    const missing = []
-    for (const s of wishlist) {
-      if (!(await exists(join(ROOT, 'public', 'lego', `${s.code}.png`)))) missing.push(s.code)
-    }
-    log(`would download ${missing.length} picture(s)${missing.length ? ': ' + missing.join(' ') : ''}`)
-    return
-  }
+  if (DRY) return
 
   if (add.length || remove.length) {
     const db = await openFirestore()
@@ -234,14 +199,6 @@ async function main() {
     for (const s of add) await col.doc(`lego-${s.code}`).set(toItem(s))
     for (const i of remove) await col.doc(i.id).delete()
     log(`Firestore: added ${add.length}, removed ${remove.length}`)
-  }
-
-  if (newPictures) {
-    const git = (...a) => execFileSync('git', a, { cwd: ROOT, stdio: 'pipe' }).toString()
-    git('add', 'public/lego')
-    git('commit', '-m', `Sync LEGO wish list: ${newPictures} new picture(s)`)
-    git('push', 'origin', 'main')
-    log(`pushed ${newPictures} new picture(s) — the site redeploys in a minute or two`)
   }
 
   log('done')

@@ -55,17 +55,18 @@ const book = (
   })
 
 /**
- * A LEGO set, with its picture served from this site.
+ * A LEGO set, pictured by LEGO.
  *
- * The pictures live in public/lego/ because LEGO's image server will not let a
- * browser read their pixels, and reading them is how the background gets cut
- * out. Served from here, they are ours to read.
+ * Their product pictures already have a transparent background and a tight
+ * frame, so they are linked as they are. fit=bounds stops LEGO's image server
+ * stretching them to fill the width asked for.
  */
 const set = (
   code: string,
   title: string,
   theme: string,
   slug: string,
+  image: string,
 ): NewItem =>
   item({
     category: 'lego',
@@ -73,7 +74,7 @@ const set = (
     title,
     creator: theme,
     detail: code,
-    cover: `/shelf/lego/${code}.png`,
+    cover: `${image}?format=webply&fit=bounds&quality=80&width=800`,
     cutout: true,
     link: `https://www.lego.com/en-us/product/${slug}`,
   })
@@ -82,11 +83,11 @@ export const PREPARED: Partial<Record<CategoryId, NewItem[]>> = {
   // The collection only: the LEGO wish list mirrors itself from LEGO.com daily
   // through scripts/sync-lego.mjs, so there is nothing to prepare for it.
   lego: [
-    set('31208', 'Hokusai \u2013 The Great Wave', 'Art', 'hokusai-the-great-wave-31208'),
-    set('31220', 'Claude Monet \u2013 Bridge over a Pond of Water Lilies', 'Art', 'claude-monet-bridge-over-a-pond-of-water-lilies-31220'),
-    set('31218', 'Japanese Cherry Blossom Landscape', 'Art', 'japanese-cherry-blossom-landscape-31218'),
-    set('40906', 'Restaurants of the World: Japan', '', 'restaurants-of-the-world-japan-40906'),
-    set('21365', 'Love Birds', 'Ideas', 'love-birds-21365'),
+    set('31208', 'Hokusai \u2013 The Great Wave', 'Art', 'hokusai-the-great-wave-31208', 'https://www.lego.com/cdn/cs/set/assets/blt93a67dfe298bfe01/31208.png'),
+    set('31220', 'Claude Monet \u2013 Bridge over a Pond of Water Lilies', 'Art', 'claude-monet-bridge-over-a-pond-of-water-lilies-31220', 'https://www.lego.com/cdn/cs/set/assets/blt363f1ae96e0f5199/blt4065b9e490396e28-31220_Prod_en-gb.png'),
+    set('31218', 'Japanese Cherry Blossom Landscape', 'Art', 'japanese-cherry-blossom-landscape-31218', 'https://www.lego.com/cdn/cs/set/assets/blt3f6cace2ff7687c6/31218_Prod_en-gb.png'),
+    set('40906', 'Restaurants of the World: Japan', '', 'restaurants-of-the-world-japan-40906', 'https://www.lego.com/cdn/cs/set/assets/bltf5fb3499cf9233bf/blt1752742b7cf6179b-40906_Prod_en-gb.png'),
+    set('21365', 'Love Birds', 'Ideas', 'love-birds-21365', 'https://www.lego.com/cdn/cs/set/assets/blt859e843a3f8c5af9/21365_Prod_en-gb.png'),
   ],
 
   bluray: [
