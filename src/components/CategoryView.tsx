@@ -57,34 +57,41 @@ export default function CategoryView({
       </header>
       <hr className="rule" />
 
-      {category.tagGroup && onThisSide.length > 0 && !arranging && (
-        <nav className="filters" aria-label={`Filter by ${category.tagGroup.label}`}>
-          {[null, ...category.tagGroup.options].map((option) => {
-            // A tag nothing on this side carries would only ever show an
-            // empty shelf, so it is left out rather than offered.
-            const count = option
-              ? onThisSide.filter((i) => i.tag === option).length
-              : onThisSide.length
-            if (!count) return null
-            return (
-              <button
-                key={option ?? 'all'}
-                className="filter"
-                aria-pressed={tag === option}
-                onClick={() => setTag(option)}
-              >
-                {option ? tagTabLabel(category, option) : 'All'}
-                <span className="filter__count">{count}</span>
-              </button>
-            )
-          })}
-        </nav>
-      )}
+      {/* Filters on the left, Arrange at the right end — one line under the
+          rule, so the shelf's controls read as a single row. */}
+      <div className="shelfbar">
+        {category.tagGroup && onThisSide.length > 0 && !arranging ? (
+          <nav
+            className="filters"
+            aria-label={`Filter by ${category.tagGroup.label}`}
+          >
+            {[null, ...category.tagGroup.options].map((option) => {
+              // A tag nothing on this side carries would only ever show an
+              // empty shelf, so it is left out rather than offered.
+              const count = option
+                ? onThisSide.filter((i) => i.tag === option).length
+                : onThisSide.length
+              if (!count) return null
+              return (
+                <button
+                  key={option ?? 'all'}
+                  className="filter"
+                  aria-pressed={tag === option}
+                  onClick={() => setTag(option)}
+                >
+                  {option ? tagTabLabel(category, option) : 'All'}
+                  <span className="filter__count">{count}</span>
+                </button>
+              )
+            })}
+          </nav>
+        ) : (
+          <span />
+        )}
 
-      {canEdit && onThisSide.length > 1 && (
-        <div className="arrange">
+        {canEdit && onThisSide.length > 1 && (
           <button
-            className="btn btn--quiet"
+            className="btn btn--quiet arrange"
             aria-pressed={arranging}
             onClick={() => {
               // Arranging always works on the whole side. Reordering inside a
@@ -96,8 +103,8 @@ export default function CategoryView({
           >
             {arranging ? 'Done' : 'Arrange'}
           </button>
-        </div>
-      )}
+        )}
+      </div>
 
       {arranging ? (
         <ArrangeList items={onThisSide} onReorder={onReorder} />

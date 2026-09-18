@@ -997,8 +997,9 @@ select {
 .filters {
   display: flex;
   flex-wrap: wrap;
+  align-items: center;
   gap: 4px 18px;
-  padding: 16px 0 2px;
+  min-width: 0;
 }
 
 .filter {
@@ -1190,11 +1191,27 @@ select {
 
 /* ---- arranging a list --------------------------------------------------- */
 
-/* Sits under the rule, pushed to its right end. */
-.arrange {
+/* The shelf's controls: filters at one end, Arrange at the other. */
+.shelfbar {
   display: flex;
-  justify-content: flex-end;
-  padding-top: 14px;
+  /* Top-aligned rather than centred: on a narrow screen the filters wrap to
+     two lines, and centring leaves Arrange floating in the gap between them.
+     Both sides share the same vertical padding, so their first lines meet. */
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 6px 20px;
+  padding: 14px 0 2px;
+  min-height: 34px;
+}
+
+.arrange {
+  flex: none;
+  padding: 6px 0;
+  border: 0;
+}
+
+.arrange[aria-pressed='true'] {
+  color: var(--accent);
 }
 
 .arrange .btn[aria-pressed='true'] {
