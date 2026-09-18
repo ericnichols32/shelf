@@ -5,7 +5,7 @@
 // data lives in one browser on one device, so the app says so in the header.
 
 import { normalise, type Item, type NewItem } from '../types'
-import { byNewest, newId, type Store } from './types'
+import { byPosition, newId, type Store } from './types'
 
 const KEY = 'shelf.items.v1'
 
@@ -15,7 +15,7 @@ function read(): Item[] {
     if (!raw) return []
     const parsed = JSON.parse(raw)
     if (!Array.isArray(parsed)) return []
-    return (parsed as Item[]).map(normalise).sort(byNewest)
+    return (parsed as Item[]).map(normalise).sort(byPosition)
   } catch {
     // A private window, or storage the browser has blocked. An empty shelf is
     // a better answer here than a crash.

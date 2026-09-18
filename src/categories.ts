@@ -215,6 +215,10 @@ export const CATEGORIES: Category[] = [
     detailLabel: 'Format',
     detailHint: 'Game-Key Card',
     ratio: 2 / 3,
+    tagGroup: {
+      label: 'Console',
+      options: ['Nintendo Switch', 'Nintendo Switch 2'],
+    },
     buyHeading: 'Where to buy',
     links: (i) => ({
       primary: {

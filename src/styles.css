@@ -1152,3 +1152,86 @@ select {
   color: var(--ink);
   font-weight: 600;
 }
+
+/* ---- stepping through a shelf ------------------------------------------- */
+
+.stepper {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  margin-bottom: 16px;
+}
+
+.stepper__arrow {
+  width: 38px;
+  height: 34px;
+  display: grid;
+  place-items: center;
+  border: 1px solid var(--sand-deep);
+  border-radius: 999px;
+  color: var(--ink);
+  font-size: 15px;
+  transition: border-color 0.15s ease, color 0.15s ease, opacity 0.15s ease;
+}
+
+.stepper__arrow:hover:not(:disabled) {
+  border-color: var(--ink);
+  color: var(--accent);
+}
+
+.stepper__arrow:disabled {
+  opacity: 0.3;
+  cursor: default;
+}
+
+.stepper__where {
+  margin-left: auto;
+}
+
+/* ---- arranging a list --------------------------------------------------- */
+
+.arrange {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px 14px;
+  padding-top: 14px;
+}
+
+.arrange .btn[aria-pressed='true'] {
+  color: var(--accent);
+  border-color: var(--accent);
+}
+
+.feed__slot {
+  position: relative;
+}
+
+.nudge {
+  display: flex;
+  gap: 8px;
+  margin-top: 10px;
+}
+
+.nudge__btn {
+  flex: 1;
+  height: 36px;
+  display: grid;
+  place-items: center;
+  background: var(--raised);
+  border: 1px solid var(--sand-deep);
+  border-radius: 999px;
+  color: var(--ink);
+  font-size: 15px;
+  transition: border-color 0.15s ease, color 0.15s ease, opacity 0.15s ease;
+}
+
+.nudge__btn:hover:not(:disabled) {
+  border-color: var(--accent);
+  color: var(--accent);
+}
+
+.nudge__btn:disabled {
+  opacity: 0.28;
+  cursor: default;
+}

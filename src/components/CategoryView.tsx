@@ -4,6 +4,7 @@ import { go } from '../route'
 import { useCanEdit } from '../edit'
 import type { Item, Status } from '../types'
 import ItemCard from './ItemCard'
+import { sortForMove } from '../reorder'
 
 export default function CategoryView({
   category,
@@ -11,6 +12,7 @@ export default function CategoryView({
   status,
   onStatus,
   onSeed,
+  onReorder,
   seeding,
 }: {
   category: Category
@@ -18,11 +20,15 @@ export default function CategoryView({
   status: Status
   onStatus: (status: Status) => void
   onSeed: () => void
+  onReorder: (id: string, sort: number) => void
   seeding: boolean
 }) {
   /** Which tag the feed is narrowed to, or null for all of them. */
   const canEdit = useCanEdit()
   const [tag, setTag] = useState<string | null>(null)
+  /** Arranging the list by hand. Only ever offered to whoever may edit. */
+  const [arranging, setArranging] = useState(false)
+  useEffect(() => setArranging(false), [category.id, status])
   // A tag from one shelf means nothing on the next.
   useEffect(() => setTag(null), [category.id])
 
@@ -75,10 +81,55 @@ export default function CategoryView({
         </nav>
       )}
 
+      {canEdit && shown.length > 1 && (
+        <div className="arrange">
+          <button
+            className="btn btn--quiet"
+            aria-pressed={arranging}
+            onClick={() => setArranging((a) => !a)}
+          >
+            {arranging ? 'Done arranging' : 'Arrange'}
+          </button>
+          {arranging && (
+            <span className="label">
+              {tag ? 'Showing one tag \u2014 moves still apply to the whole list' : 'Drag-free: nudge each one along'}
+            </span>
+          )}
+        </div>
+      )}
+
       {shown.length > 0 ? (
         <div className="feed">
           {shown.map((item, i) => (
-            <ItemCard key={item.id} item={item} index={i} />
+            <div key={item.id} className="feed__slot">
+              <ItemCard item={item} index={i} inert={arranging} />
+              {arranging && (
+                <div className="nudge">
+                  <button
+                    className="nudge__btn"
+                    aria-label="Move earlier"
+                    disabled={i === 0}
+                    onClick={() => {
+                      const sort = sortForMove(shown, i, i - 1)
+                      if (sort !== null) onReorder(item.id, sort)
+                    }}
+                  >
+                    &larr;
+                  </button>
+                  <button
+                    className="nudge__btn"
+                    aria-label="Move later"
+                    disabled={i === shown.length - 1}
+                    onClick={() => {
+                      const sort = sortForMove(shown, i, i + 1)
+                      if (sort !== null) onReorder(item.id, sort)
+                    }}
+                  >
+                    &rarr;
+                  </button>
+                </div>
+              )}
+            </div>
           ))}
         </div>
       ) : (

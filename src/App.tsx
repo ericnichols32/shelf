@@ -220,6 +220,7 @@ export default function App() {
             status={side}
             onStatus={setSide}
             onSeed={seed}
+            onReorder={(id, sort) => update(id, { sort })}
             seeding={seeding}
           />
         )}
@@ -258,7 +259,13 @@ export default function App() {
           }}
         />
       ) : (
-        <ItemDetail item={item} onRemove={remove} />
+        <ItemDetail
+          item={item}
+          siblings={items.filter(
+            (i) => i.category === item.category && i.status === item.status,
+          )}
+          onRemove={remove}
+        />
       )}
     </div>
     </CanEdit.Provider>

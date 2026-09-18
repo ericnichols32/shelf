@@ -7,9 +7,12 @@ import Cover from './Cover'
 
 export default function ItemDetail({
   item,
+  siblings,
   onRemove,
 }: {
   item: Item
+  /** The rest of the list this came from, in the order the feed shows it. */
+  siblings: Item[]
   onRemove: (id: string) => void
 }) {
   const canEdit = useCanEdit()
@@ -18,10 +21,41 @@ export default function ItemDetail({
   if (!category) return null
 
   const wants = item.status === 'wants'
+
+  // Stepping through a shelf without going back to it each time. The list is
+  // the one behind you — same shelf, same side, same order — so the arrows
+  // move the way the feed reads.
+  const here = siblings.findIndex((i) => i.id === item.id)
+  const previous = here > 0 ? siblings[here - 1] : null
+  const next = here >= 0 && here < siblings.length - 1 ? siblings[here + 1] : null
   const links = buyLinks(item)
 
   return (
     <article className="detail">
+      {(previous || next) && (
+        <nav className="stepper" aria-label="Move through the shelf">
+          <button
+            className="stepper__arrow"
+            disabled={!previous}
+            aria-label="Previous"
+            onClick={() => previous && go(`/i/${previous.id}`)}
+          >
+            &larr;
+          </button>
+          <span className="stepper__where label">
+            {here + 1} of {siblings.length}
+          </span>
+          <button
+            className="stepper__arrow"
+            disabled={!next}
+            aria-label="Next"
+            onClick={() => next && go(`/i/${next.id}`)}
+          >
+            &rarr;
+          </button>
+        </nav>
+      )}
+
       <Cover item={item} category={category} className="detail__art" />
 
       <h1 className="detail__title">{item.title}</h1>

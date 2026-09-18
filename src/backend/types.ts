@@ -18,5 +18,10 @@ export interface Store {
 export const newId = () =>
   `${Date.now().toString(36)}${Math.random().toString(36).slice(2, 8)}`
 
-/** Newest first — the feed reads as a log, most recent at the top. */
-export const byNewest = (a: Item, b: Item) => b.addedAt - a.addedAt
+/**
+ * The order a list reads in: hand-placed first, then newest.
+ *
+ * Re-exported from types so the two stores sort identically without either
+ * knowing how the ordering works.
+ */
+export { byPosition } from '../types'

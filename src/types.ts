@@ -36,10 +36,29 @@ export interface Item {
   link: string
   notes: string
   addedAt: number
+  /**
+   * Where this sits in its list, when it has been put somewhere by hand.
+   *
+   * Lower comes first. Absent means "wherever it fell", which is newest first —
+   * see position() below. Moving something writes a number between its new
+   * neighbours' numbers, so one move is one write however long the list is.
+   */
+  sort?: number
 }
 
 /** Everything about an item except the two fields the store assigns. */
 export type NewItem = Omit<Item, 'id' | 'addedAt'>
+
+/**
+ * The number a list is sorted by, ascending.
+ *
+ * With no hand-placed order, negative added-time puts the newest first, which
+ * is where anything added lands until it is moved.
+ */
+export const position = (item: Pick<Item, 'sort' | 'addedAt'>): number =>
+  item.sort ?? -item.addedAt
+
+export const byPosition = (a: Item, b: Item) => position(a) - position(b)
 
 export const EMPTY_ITEM: NewItem = {
   category: 'vinyl',

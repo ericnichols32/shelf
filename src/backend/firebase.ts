@@ -16,7 +16,7 @@ import {
 } from 'firebase/firestore'
 import { normalise, type NewItem } from '../types'
 import { firebaseApp } from './app'
-import { byNewest, type Store } from './types'
+import { byPosition, type Store } from './types'
 
 const COLLECTION = 'shelfItems'
 
@@ -33,7 +33,7 @@ export function createCloudStore(): Store {
           const all = snap.docs.map((d) =>
             normalise({ id: d.id, ...d.data() }),
           )
-          listener(all.sort(byNewest))
+          listener(all.sort(byPosition))
         },
         (err) => console.error('Shelf: could not read the collection.', err),
       )
