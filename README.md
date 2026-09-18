@@ -324,6 +324,75 @@ collection. Add it to the home screen if you want it to behave like an app.
 To run a local copy against the network instead, `npm run dev -- --host` and use
 the address it prints.
 
+## LEGO wish list, synced daily
+
+The LEGO wish list here is a mirror of your wish list on LEGO.com. Once a day,
+`scripts/sync-lego.mjs` reads it and:
+
+- **adds** any set that is new on LEGO — name, set number, theme, a link to the
+  product page, and LEGO's own picture with its background cut out
+- **removes** a set this script added once it has left your LEGO wish list
+
+It never touches anything else. A set you move to the **Collection** is kept
+even after it leaves LEGO's list — you bought it. A set you typed in by hand is
+never removed. A set already on the shelf is never added twice. Those rules are
+tested in the script itself.
+
+### Why it runs on the Mac, not on GitHub
+
+LEGO refuses its wish list to datacentres: a GitHub Actions runner asking for it
+gets a 403, while an ordinary home connection gets the list. That is LEGO's
+rule and the script does not try to get round it — from your Mac it is no
+different from opening the wish list in a browser once a day.
+
+So it is a macOS scheduled job, run at 9am. Asleep at 9, it runs on waking;
+switched off, the day is skipped and the next run catches up, because it always
+compares the whole list.
+
+### Why the pictures are copied into the site
+
+LEGO's image server will not let a browser read its pixels, and reading them is
+how a background gets cut out. So the script downloads each picture into
+`public/lego/` and pushes it, and the site serves it from its own address. The
+cut-out then works exactly as it does for the Blu-rays.
+
+### Setting it up
+
+It needs to be allowed to write to Firebase. Your own sign-in can't be used from
+a scheduled job, so it uses a **service-account key** — a file that lets the
+script act as the project's administrator.
+
+1. Firebase → **Settings → Service accounts** → **Generate new private key**.
+   It downloads a `.json` file.
+2. Move it into place:
+
+   ```sh
+   mkdir -p ~/.config/shelf && mv ~/Downloads/eric-s-wish-list-*.json ~/.config/shelf/service-account.json
+   ```
+
+3. Run it once to check:
+
+   ```sh
+   zsh scripts/install-lego-sync.sh --now
+   ```
+
+**Treat that key like a password.** It can do anything to the database,
+bypassing the rules. It lives in your home folder, never in this repo, and is
+never uploaded anywhere. If it leaks, delete it under Service accounts and make
+a new one.
+
+Other commands:
+
+```sh
+node scripts/sync-lego.mjs --dry-run        # say what would change, change nothing
+node scripts/sync-lego.mjs --pictures-only  # just fetch missing pictures
+zsh scripts/install-lego-sync.sh --remove   # stop the daily sync for good
+tail -50 ~/Library/Logs/shelf-lego-sync.log # what it did recently
+```
+
+The LEGO **Collection** is not synced — there is no public list of what you own.
+Five sets are in `src/prepared.ts`, loaded from the LEGO *Paste a list* screen.
+
 ## What isn't built yet
 
 **Pulling from your LEGO account and the Nintendo eShop.** You asked for a daily

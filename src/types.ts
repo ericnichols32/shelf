@@ -44,6 +44,14 @@ export interface Item {
    * neighbours' numbers, so one move is one write however long the list is.
    */
   sort?: number
+  /**
+   * Where an item came from, when it was not typed in here.
+   *
+   * 'lego-wishlist' marks sets mirrored from LEGO.com by scripts/sync-lego.mjs.
+   * The sync only ever removes items it put there itself, and only while they
+   * are still wanted — move one to the collection and it is yours to keep.
+   */
+  source?: string
 }
 
 /** Everything about an item except the two fields the store assigns. */

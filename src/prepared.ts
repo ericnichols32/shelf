@@ -54,7 +54,41 @@ const book = (
     cover: coverId ? `https://covers.openlibrary.org/b/id/${coverId}-L.jpg` : '',
   })
 
+/**
+ * A LEGO set, with its picture served from this site.
+ *
+ * The pictures live in public/lego/ because LEGO's image server will not let a
+ * browser read their pixels, and reading them is how the background gets cut
+ * out. Served from here, they are ours to read.
+ */
+const set = (
+  code: string,
+  title: string,
+  theme: string,
+  slug: string,
+): NewItem =>
+  item({
+    category: 'lego',
+    status: 'owns',
+    title,
+    creator: theme,
+    detail: code,
+    cover: `/shelf/lego/${code}.png`,
+    cutout: true,
+    link: `https://www.lego.com/en-us/product/${slug}`,
+  })
+
 export const PREPARED: Partial<Record<CategoryId, NewItem[]>> = {
+  // The collection only: the LEGO wish list mirrors itself from LEGO.com daily
+  // through scripts/sync-lego.mjs, so there is nothing to prepare for it.
+  lego: [
+    set('31208', 'Hokusai \u2013 The Great Wave', 'Art', 'hokusai-the-great-wave-31208'),
+    set('31220', 'Claude Monet \u2013 Bridge over a Pond of Water Lilies', 'Art', 'claude-monet-bridge-over-a-pond-of-water-lilies-31220'),
+    set('31218', 'Japanese Cherry Blossom Landscape', 'Art', 'japanese-cherry-blossom-landscape-31218'),
+    set('40906', 'Restaurants of the World: Japan', '', 'restaurants-of-the-world-japan-40906'),
+    set('21365', 'Love Birds', 'Ideas', 'love-birds-21365'),
+  ],
+
   bluray: [
     disc('Transformers: Dark of the Moon', 'Michael Bay', '2011', '41038'),
     disc('The Bourne Ultimatum', 'Paul Greengrass', '2007', '148301'),
