@@ -135,7 +135,10 @@ const exists = (p) => access(p).then(() => true, () => false)
 async function downloadPicture(set) {
   const file = join(ROOT, 'public', 'lego', `${set.code}.png`)
   if (await exists(file)) return false
-  const res = await fetch(`${set.image}?format=png&width=800&height=800`, {
+  // fit=bounds matters: without it LEGO's image server stretches the picture to
+  // fill the exact width and height asked for, squashing every set that isn't
+  // square. With it, the picture is scaled to fit inside them, shape intact.
+  const res = await fetch(`${set.image}?fit=bounds&format=png&width=800&height=800`, {
     headers: { 'user-agent': UA },
   })
   if (!res.ok) throw new Error(`picture for ${set.code}: HTTP ${res.status}`)
