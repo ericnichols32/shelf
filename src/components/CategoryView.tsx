@@ -44,23 +44,42 @@ export default function CategoryView({
     <>
       <header className="cathead">
         <h1 className="cathead__name">{category.name}</h1>
-        <p className="cathead__sub">
-          {status === 'wants' ? 'Wish List' : 'Eric\u2019s Collection'}
-        </p>
-        <span className="label">
-          {counts[status]}{' '}
-          {counts[status] === 1
-            ? category.noun.replace(/s$/, '')
-            : category.noun}{' '}
-          {status === 'wants' ? 'wanted' : 'logged'}
-        </span>
       </header>
+
+      {/* Which side you are looking at, said once and chosen in the same
+          place. This used to float at the bottom of the screen and the shelf
+          named it again underneath the title; now it does both jobs at the
+          top, where you look first. */}
+      <nav className="sides" aria-label="Wish list or collection">
+        {(['wants', 'owns'] as Status[]).map((s) => (
+          <button
+            key={s}
+            className="sides__tab"
+            aria-pressed={status === s}
+            onClick={() => onStatus(s)}
+          >
+            {s === 'wants' ? 'Wish List' : 'Collection'}
+          </button>
+        ))}
+      </nav>
+
+      <p className="cathead__count label">
+        {counts[status]}{' '}
+        {counts[status] === 1
+          ? category.noun.replace(/s$/, '')
+          : category.noun}{' '}
+        {status === 'wants' ? 'wanted' : 'logged'}
+      </p>
       <hr className="rule" />
 
       {/* Filters on the left, Arrange at the right end — one line under the
           rule, so the shelf's controls read as a single row. */}
       <div className="shelfbar">
-        {category.tagGroup && onThisSide.length > 0 && !arranging ? (
+        {/* Only worth showing when something on this side actually carries a
+            tag — a lone "All" filters nothing. */}
+        {category.tagGroup &&
+        !arranging &&
+        onThisSide.some((i) => i.tag) ? (
           <nav
             className="filters"
             aria-label={`Filter by ${category.tagGroup.label}`}
@@ -125,19 +144,6 @@ export default function CategoryView({
       )}
 
       <div className="dock">
-        <div className="pill" role="group" aria-label="Owned or wanted">
-          {(['wants', 'owns'] as Status[]).map((s) => (
-            <button
-              key={s}
-              className="pill__seg"
-              aria-pressed={status === s}
-              onClick={() => onStatus(s)}
-            >
-              {s}
-              <span className="pill__count">{counts[s]}</span>
-            </button>
-          ))}
-        </div>
         {canEdit && (
           <button
             className="addbtn"

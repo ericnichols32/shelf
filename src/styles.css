@@ -248,17 +248,7 @@ select {
   font-size: clamp(2.4rem, 11vw, 3.6rem);
   letter-spacing: -0.035em;
   line-height: 1;
-  margin: 2px 0 6px;
-}
-
-/* Which side of the pill you are on, said in words. */
-.cathead__sub {
-  font-family: var(--display);
-  font-style: italic;
-  font-size: 27px;
-  letter-spacing: -0.015em;
-  color: var(--accent);
-  margin: 0 0 9px;
+  margin: 2px 0 0;
 }
 
 /* ---- the feed ------------------------------------------------------ */
@@ -1287,4 +1277,45 @@ select {
 .arrangerow__n {
   flex: none;
   color: var(--faint);
+}
+
+/* ---- wish list / collection --------------------------------------------- */
+
+/* The bottom pill, moved up and given room: same idea, same behaviour, and
+   the selected side still fills with ink. Two halves of the width, because
+   there are only ever two and neither is secondary. */
+.sides {
+  display: flex;
+  gap: 8px;
+  margin: 16px 0 18px;
+  background: var(--raised);
+  border: 1px solid var(--sand);
+  border-radius: 999px;
+  padding: 5px;
+  box-shadow: var(--shadow-card);
+}
+
+.sides__tab {
+  flex: 1;
+  font-family: var(--display);
+  font-size: clamp(19px, 4.6vw, 24px);
+  letter-spacing: -0.02em;
+  color: var(--muted);
+  padding: 13px 10px;
+  border-radius: 999px;
+  white-space: nowrap;
+  transition: background 0.2s ease, color 0.2s ease;
+}
+
+.sides__tab:hover {
+  color: var(--ink);
+}
+
+.sides__tab[aria-pressed='true'] {
+  background: var(--ink);
+  color: var(--paper);
+}
+
+.cathead__count {
+  margin: 0 0 14px;
 }
