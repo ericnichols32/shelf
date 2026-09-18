@@ -3,7 +3,7 @@ import type { Category } from '../categories'
 import { canLookUp, lookup } from '../lookup'
 import { PREPARED } from '../prepared'
 import { go } from '../route'
-import { EMPTY_ITEM, type NewItem, type Status } from '../types'
+import { EMPTY_ITEM, type Item, type NewItem, type Status } from '../types'
 
 /**
  * Adding a shelf's worth of things at once, from a list pasted in.
@@ -42,30 +42,42 @@ function stripMarkers(line: string): string {
   }
 }
 
-/** Titles people paste come with list markers and an artist after a dash. */
-function parse(text: string): Row[] {
+type Order = 'creator-first' | 'title-first'
+
+/** Titles people paste have a name either side of a dash — but which is which? */
+function parse(text: string, order: Order): Row[] {
   return text
     .split('\n')
     .map(stripMarkers)
     .filter(Boolean)
     .map((line) => {
       const split = line.split(/\s+(?:[-–—]|by)\s+/i)
-      return {
-        title: (split[0] ?? line).trim(),
-        creator: split.length > 1 ? split.slice(1).join(' ').trim() : '',
-        state: 'waiting' as RowState,
+      if (split.length < 2) {
+        return { title: line.trim(), creator: '', state: 'waiting' as RowState }
       }
+      const parts = split.map((part) => part.trim())
+      const first = parts[0]
+      const second = parts.slice(1).join(' ')
+      // "by" names the maker outright, whichever way the shelf usually reads.
+      const saysBy = /\s+by\s+/i.test(line)
+      return order === 'creator-first' && !saysBy
+        ? { title: second, creator: first, state: 'waiting' as RowState }
+        : { title: first, creator: second, state: 'waiting' as RowState }
     })
 }
 
 export default function ImportList({
   category,
   initialStatus,
+  items,
   onAdd,
+  onUpdate,
 }: {
   category: Category
   initialStatus: Status
+  items: Item[]
   onAdd: (item: NewItem) => Promise<void>
+  onUpdate: (id: string, patch: Partial<Item>) => void
 }) {
   const [text, setText] = useState('')
   const [status, setStatus] = useState<Status>(initialStatus)
@@ -73,7 +85,29 @@ export default function ImportList({
   const [running, setRunning] = useState(false)
   const [added, setAdded] = useState(0)
 
+  /** Which half of "A - B" is the title. Starts at the shelf's convention. */
+  const [order, setOrder] = useState<Order>(
+    category.listOrder ?? 'title-first',
+  )
+  const rowsFromText = parse(text, order)
+
   const prepared = PREPARED[category.id] ?? []
+
+  /**
+   * Undo a list pasted the wrong way round.
+   *
+   * Getting the halves of "A - B" swapped files every record under its
+   * artist's name, and putting that right one item at a time is miserable.
+   * Only offered for things that actually have both halves to trade.
+   */
+  const [swapped, setSwapped] = useState(0)
+  const swappable = items.filter(
+    (i) => i.category === category.id && i.status === status && i.creator,
+  )
+  const swapAll = () => {
+    swappable.forEach((i) => onUpdate(i.id, { title: i.creator, creator: i.title }))
+    setSwapped(swappable.length)
+  }
 
   /**
    * Add a list that was put together in advance, covers and all.
@@ -104,7 +138,7 @@ export default function ImportList({
   }
 
   const run = async () => {
-    const parsed = parse(text)
+    const parsed = rowsFromText
     if (!parsed.length) return
     setRows(parsed)
     setRunning(true)
@@ -196,6 +230,24 @@ export default function ImportList({
             ))}
           </div>
 
+          <div className="choice">
+            {(
+              [
+                ['creator-first', `${category.creatorLabel} first`],
+                ['title-first', 'Title first'],
+              ] as Array<[Order, string]>
+            ).map(([value, label]) => (
+              <button
+                key={value}
+                type="button"
+                className={`btn ${order === value ? 'btn--solid' : ''}`}
+                onClick={() => setOrder(value)}
+              >
+                {label}
+              </button>
+            ))}
+          </div>
+
           <label className="field">
             <span className="label">The list</span>
             <textarea
@@ -205,16 +257,28 @@ export default function ImportList({
               autoFocus
             />
             <span className="field__hint">
-              {parse(text).length || 'No'}{' '}
-              {parse(text).length === 1 ? 'title' : 'titles'} so far.
+              {rowsFromText.length || 'No'}{' '}
+              {rowsFromText.length === 1 ? 'title' : 'titles'} so far.
             </span>
+            {/* Shows what the first line was made of, before anything is
+                written. Getting the halves the wrong way round files a record
+                under its artist's name, and that is tedious to undo. */}
+            {rowsFromText[0] && (
+              <span className="field__hint import__check">
+                First one reads as &mdash; title:{' '}
+                <b>{rowsFromText[0].title || '(blank)'}</b>
+                {'  \u00b7  '}
+                {category.creatorLabel.toLowerCase()}:{' '}
+                <b>{rowsFromText[0].creator || '(blank)'}</b>
+              </span>
+            )}
           </label>
 
           <div className="actions">
             <button
               className="btn btn--solid"
               onClick={run}
-              disabled={!parse(text).length}
+              disabled={!rowsFromText.length}
             >
               Add them
             </button>
@@ -225,6 +289,23 @@ export default function ImportList({
               Cancel
             </button>
           </div>
+
+          {swappable.length > 0 && (
+            <p className="form__aside">
+              {swapped > 0 ? (
+                <>Swapped {swapped}. Check the shelf &mdash; run it again to put them back.</>
+              ) : (
+                <>
+                  Pasted a list the wrong way round?{' '}
+                  <button type="button" className="linkish" onClick={swapAll}>
+                    Swap title and {category.creatorLabel.toLowerCase()} on all{' '}
+                    {swappable.length}
+                  </button>{' '}
+                  on the {status} side. Running it twice puts them back.
+                </>
+              )}
+            </p>
+          )}
 
           {prepared.length > 0 && (
             <p className="form__aside">

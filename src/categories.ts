@@ -28,6 +28,15 @@ export interface Category {
   detailHint: string
   /** Cover aspect ratio, width / height. A record is square, a book is not. */
   ratio: number
+  /**
+   * Which half of "A - B" is the title, in a pasted list.
+   *
+   * Music is written artist first — *Anderson .Paak - Malibu* — and everything
+   * else here is written title first: *Piranesi - Susanna Clarke*, *Heat -
+   * Michael Mann*. Guessing wrong silently files a record under the wrong name,
+   * so the importer shows what it made of your first line before it commits.
+   */
+  listOrder?: 'creator-first' | 'title-first'
   /** An extra single-choice field, for shelves that want one. */
   tagGroup?: {
     label: string
@@ -90,6 +99,7 @@ export const CATEGORIES: Category[] = [
     noun: 'records',
     creatorLabel: 'Artist',
     creatorHint: 'Fleetwood Mac',
+    listOrder: 'creator-first',
     detailLabel: 'Pressing',
     detailHint: '2021 reissue, clear',
     ratio: 1,

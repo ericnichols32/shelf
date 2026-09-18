@@ -205,10 +205,12 @@ export default function App() {
           <ImportList
             category={category}
             initialStatus={side}
+            items={items}
             onAdd={async (values) => {
               setSide(values.status)
               await store.add(values)
             }}
+            onUpdate={update}
           />
         )}
         {route.name === 'category' && (

@@ -1141,3 +1141,14 @@ select {
   color: var(--accent) !important;
   user-select: all;
 }
+
+.import__check {
+  display: block;
+  margin-top: 6px;
+  color: var(--muted);
+}
+
+.import__check b {
+  color: var(--ink);
+  font-weight: 600;
+}
