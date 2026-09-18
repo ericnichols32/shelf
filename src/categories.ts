@@ -37,6 +37,14 @@ export interface Category {
    * so the importer shows what it made of your first line before it commits.
    */
   listOrder?: 'creator-first' | 'title-first'
+  /**
+   * Filter the shelf by its maker field rather than by a tag.
+   *
+   * For LEGO the theme — Ideas, Art, Harry Potter — is what you would browse
+   * by, and it arrives from LEGO with each set rather than from a fixed list,
+   * so the filters are built from whatever themes are actually on the shelf.
+   */
+  filterByCreator?: boolean
   /** An extra single-choice field, for shelves that want one. */
   tagGroup?: {
     label: string
@@ -184,6 +192,7 @@ export const CATEGORIES: Category[] = [
     noun: 'sets',
     creatorLabel: 'Theme',
     creatorHint: 'Icons',
+    filterByCreator: true,
     detailLabel: 'Set number',
     detailHint: '10497',
     ratio: 4 / 3,

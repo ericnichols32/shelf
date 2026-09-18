@@ -38,7 +38,28 @@ export default function CategoryView({
     wants: mine.filter((i) => i.status === 'wants').length,
   }
   const onThisSide = mine.filter((i) => i.status === status)
-  const shown = tag ? onThisSide.filter((i) => i.tag === tag) : onThisSide
+  /**
+   * What the filters work from on this shelf.
+   *
+   * Most shelves filter by their tag, whose options are a fixed list in the
+   * shelf's settings. LEGO filters by theme, and its themes are open-ended —
+   * they come from LEGO with each set — so the options are simply the themes
+   * on this side, commonest first. A new theme gets its own tab on arrival.
+   */
+  const keyOf = (i: Item) => (category.filterByCreator ? i.creator : i.tag)
+  const filterOptions: string[] = category.filterByCreator
+    ? [...new Set(onThisSide.map(keyOf).filter(Boolean))].sort(
+        (a, b) =>
+          onThisSide.filter((i) => keyOf(i) === b).length -
+            onThisSide.filter((i) => keyOf(i) === a).length ||
+          a.localeCompare(b),
+      )
+    : (category.tagGroup?.options ?? [])
+  const filterLabel = category.filterByCreator
+    ? category.creatorLabel
+    : category.tagGroup?.label
+
+  const shown = tag ? onThisSide.filter((i) => keyOf(i) === tag) : onThisSide
 
   return (
     <>
@@ -77,18 +98,15 @@ export default function CategoryView({
       <div className="shelfbar">
         {/* Only worth showing when something on this side actually carries a
             tag — a lone "All" filters nothing. */}
-        {category.tagGroup &&
+        {filterOptions.length > 0 &&
         !arranging &&
-        onThisSide.some((i) => i.tag) ? (
-          <nav
-            className="filters"
-            aria-label={`Filter by ${category.tagGroup.label}`}
-          >
-            {[null, ...category.tagGroup.options].map((option) => {
+        onThisSide.some((i) => keyOf(i)) ? (
+          <nav className="filters" aria-label={`Filter by ${filterLabel}`}>
+            {[null, ...filterOptions].map((option) => {
               // A tag nothing on this side carries would only ever show an
               // empty shelf, so it is left out rather than offered.
               const count = option
-                ? onThisSide.filter((i) => i.tag === option).length
+                ? onThisSide.filter((i) => keyOf(i) === option).length
                 : onThisSide.length
               if (!count) return null
               return (
@@ -98,7 +116,11 @@ export default function CategoryView({
                   aria-pressed={tag === option}
                   onClick={() => setTag(option)}
                 >
-                  {option ? tagTabLabel(category, option) : 'All'}
+                  {option
+                    ? category.filterByCreator
+                      ? option
+                      : tagTabLabel(category, option)
+                    : 'All'}
                   <span className="filter__count">{count}</span>
                 </button>
               )
