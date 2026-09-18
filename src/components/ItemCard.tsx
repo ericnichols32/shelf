@@ -2,6 +2,7 @@ import { byId } from '../categories'
 import { go } from '../route'
 import type { Item } from '../types'
 import Cover from './Cover'
+import { formatPrice } from '../price'
 
 /** Rotations cycle so a column of cards never repeats the same lean. */
 const TILTS = ['-0.9deg', '0.7deg', '-0.45deg', '1deg', '-0.7deg', '0.5deg']
@@ -37,7 +38,13 @@ export default function ItemCard({ item, index }: { item: Item; index: number })
         ) : (
           <>
             {item.creator && <> / {item.creator}</>}
-            {item.year && <> / {item.year}</>}
+            {/* On the wish list a price says more than a year does. Owned
+                things keep their year — what they cost is no longer news. */}
+            {item.status === 'wants' && item.price ? (
+              <> / {formatPrice(item.price)}</>
+            ) : (
+              item.year && <> / {item.year}</>
+            )}
           </>
         )}
       </span>

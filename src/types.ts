@@ -52,6 +52,11 @@ export interface Item {
    * are still wanted — move one to the collection and it is yours to keep.
    */
   source?: string
+  /**
+   * The shop's current price, in cents. Only synced sets have one; the sync
+   * keeps it up to date, so it follows LEGO's sales and price changes.
+   */
+  price?: number
 }
 
 /** Everything about an item except the two fields the store assigns. */

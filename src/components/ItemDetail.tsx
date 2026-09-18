@@ -4,6 +4,7 @@ import { go } from '../route'
 import { useCanEdit } from '../edit'
 import type { Item } from '../types'
 import Cover from './Cover'
+import { formatPrice } from '../price'
 
 export default function ItemDetail({
   item,
@@ -104,7 +105,10 @@ export default function ItemDetail({
             target="_blank"
             rel="noreferrer"
           >
-            <span>{links.primary.label}</span>
+            <span>
+              {links.primary.label}
+              {item.price ? ` - ${formatPrice(item.price)}` : ''}
+            </span>
             <span aria-hidden="true">&rarr;</span>
           </a>
           {links.secondary && (

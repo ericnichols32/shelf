@@ -59,7 +59,11 @@ async function fetchWishlist() {
         variables: { id: WISHLIST_ID },
         query: `query GetPublicWishListById($id: String!) {
           listGetPublicById(id: $id) {
-            lineItems { addedAt product { name slug productCode primaryImage brandCategory { name } } }
+            lineItems {
+              addedAt
+              product { name slug productCode primaryImage brandCategory { name } }
+              productVariant { price { centAmount } }
+            }
           }
         }`,
       }),
@@ -73,13 +77,16 @@ async function fetchWishlist() {
   if (!Array.isArray(lines)) {
     throw new Error(`Unexpected answer from LEGO: ${JSON.stringify(body).slice(0, 200)}`)
   }
-  return lines.map(({ addedAt, product: p }) => ({
+  return lines.map(({ addedAt, product: p, productVariant }) => ({
     code: p.productCode,
     name: clean(p.name),
     theme: clean(p.brandCategory?.name),
     link: `https://www.lego.com/en-us/product/${p.slug}`,
     image: p.primaryImage.split('?')[0],
     addedAt: Date.parse(addedAt) || Date.now(),
+    // Current price, sales included. Absent for the odd set LEGO lists
+    // without one; those simply show no price.
+    price: productVariant?.price?.centAmount ?? null,
   }))
 }
 
@@ -100,7 +107,14 @@ async function readShelf() {
       const f = d.fields ?? {}
       const v = (k) => f[k]?.stringValue ?? ''
       if (v('category') !== 'lego') continue
-      out.push({ id: d.name.split('/').pop(), status: v('status'), code: v('detail'), source: v('source') })
+      const price = f.price?.integerValue ?? f.price?.doubleValue
+      out.push({
+        id: d.name.split('/').pop(),
+        status: v('status'),
+        code: v('detail'),
+        source: v('source'),
+        price: price == null ? null : Number(price),
+      })
     }
     page = body.nextPageToken ?? ''
   } while (page)
@@ -121,6 +135,16 @@ export function plan(wishlist, shelf) {
     remove: shelf.filter(
       (i) => i.source === SOURCE && i.status === 'wants' && !onLego.has(i.code),
     ),
+    // Prices move — sales, increases — so a set already here takes LEGO's
+    // current price. Only the price: nothing you may have edited is touched,
+    // and only on sets this script added.
+    reprice: shelf
+      .filter((i) => i.source === SOURCE)
+      .map((i) => {
+        const now = wishlist.find((w) => w.code === i.code)?.price
+        return now != null && now !== i.price ? { id: i.id, code: i.code, from: i.price, to: now } : null
+      })
+      .filter(Boolean),
   }
 }
 
@@ -166,6 +190,7 @@ const toItem = (set) => ({
   notes: '',
   addedAt: set.addedAt,
   source: SOURCE,
+  ...(set.price != null && { price: set.price }),
 })
 
 // ---- the run ---------------------------------------------------------------------
@@ -177,7 +202,7 @@ async function main() {
   const shelf = await readShelf()
   log(`LEGO wish list: ${wishlist.length} sets · LEGO shelf here: ${shelf.length} items`)
 
-  const { add, remove } = plan(wishlist, shelf)
+  const { add, remove, reprice } = plan(wishlist, shelf)
 
   // A wish list that suddenly reads as empty, when this script has put several
   // sets here before, is far likelier to be LEGO changing its API than a real
@@ -189,16 +214,19 @@ async function main() {
 
   for (const s of add) log(`  + ${s.code}  ${s.name}  [${s.theme || '—'}]`)
   for (const i of remove) log(`  − ${i.code}  (left the LEGO wish list)`)
-  if (!add.length && !remove.length) log('  nothing to change')
+  const cents = (c) => (c == null ? '—' : `$${(c / 100).toFixed(2)}`)
+  for (const r of reprice) log(`  $ ${r.code}  ${cents(r.from)} → ${cents(r.to)}`)
+  if (!add.length && !remove.length && !reprice.length) log('  nothing to change')
 
   if (DRY) return
 
-  if (add.length || remove.length) {
+  if (add.length || remove.length || reprice.length) {
     const db = await openFirestore()
     const col = db.collection('shelfItems')
     for (const s of add) await col.doc(`lego-${s.code}`).set(toItem(s))
     for (const i of remove) await col.doc(i.id).delete()
-    log(`Firestore: added ${add.length}, removed ${remove.length}`)
+    for (const r of reprice) await col.doc(r.id).update({ price: r.to })
+    log(`Firestore: added ${add.length}, removed ${remove.length}, repriced ${reprice.length}`)
   }
 
   log('done')
