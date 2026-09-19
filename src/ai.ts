@@ -19,7 +19,7 @@ export const aiConfigured = cloudConfigured
  * answering, the next is tried, so the site keeps working until this list is
  * updated.
  */
-const MODELS = ['gemini-3.8-flash', 'gemini-3.5-flash-lite', 'gemini-2.5-flash']
+const MODELS = ['gemini-3.8-flash', 'gemini-3.6-flash', 'gemini-3.5-flash-lite']
 
 export type Part = string | { mimeType: string; data: string }
 
@@ -38,7 +38,7 @@ export async function askJson<T>(parts: Part[], schema: (s: typeof import('fireb
   )
 
   let lastError: unknown
-  for (const model of working ? [working] : MODELS) {
+  for (const model of working ? [working, ...MODELS.filter((m) => m !== working)] : MODELS) {
     try {
       const m = getGenerativeModel(ai, {
         model,
@@ -52,16 +52,15 @@ export async function askJson<T>(parts: Part[], schema: (s: typeof import('fireb
       working = model
       return JSON.parse(result.response.text()) as T
     } catch (err) {
+      if ((err as Error)?.name === 'AbortError') throw err
+      // Retired, busy, or out of its own free allowance — each model has a
+      // separate one — so the next is worth asking.
       lastError = err
-      const message = String((err as Error)?.message ?? err)
-      // A retired or unknown model: try the next one. Anything else — the
-      // service not switched on, the free allowance used up — won't be fixed
-      // by a different model, so stop here.
-      if (!/not.?found|404|not supported|unknown model/i.test(message)) break
     }
   }
   const message = String((lastError as Error)?.message ?? lastError)
-  if (/api.*(not been used|disabled|not enabled)|firebasevertexai|PERMISSION_DENIED|403/i.test(message)) {
+  // Every error names the service's address, so match the wording, not that.
+  if (/requires the Firebase AI API|has not been used|is disabled|PERMISSION_DENIED/i.test(message)) {
     throw new AiUnavailable('Photo reading isn’t switched on in Firebase yet.')
   }
   if (/quota|429|RESOURCE_EXHAUSTED/i.test(message)) {
