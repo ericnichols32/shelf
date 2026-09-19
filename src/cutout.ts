@@ -42,7 +42,7 @@ function load(url: string): Promise<HTMLImageElement> {
   })
 }
 
-function clearBackground(img: HTMLImageElement, ratio: number): string {
+function clearBackground(img: HTMLImageElement, ratio: number, fill: number): string {
   const canvas = document.createElement('canvas')
   canvas.width = img.naturalWidth
   canvas.height = img.naturalHeight
@@ -82,7 +82,7 @@ function clearBackground(img: HTMLImageElement, ratio: number): string {
   }
 
   ctx.putImageData(data, 0, 0)
-  return trim(canvas, px, w, h, ratio)
+  return trim(canvas, px, w, h, ratio, fill)
 }
 
 /**
@@ -101,6 +101,7 @@ function trim(
   w: number,
   h: number,
   ratio: number,
+  fill: number,
 ): string {
   let top = h
   let left = w
@@ -136,13 +137,12 @@ function trim(
   out.height = 1000
   out.width = Math.round(1000 * ratio)
 
-  const FILL = 0.94
-  let drawH = out.height * FILL
+  let drawH = out.height * fill
   let drawW = (drawH * cutW) / cutH
   // A very wide object — an angled render, a boxed set — would run off the
   // sides at full height, so it gives up some height to stay whole.
-  if (drawW > out.width * FILL) {
-    drawW = out.width * FILL
+  if (drawW > out.width * fill) {
+    drawW = out.width * fill
     drawH = (drawW * cutH) / cutW
   }
 
@@ -184,14 +184,15 @@ async function loadReadable(url: string): Promise<HTMLImageElement> {
 export async function cutOutBackground(
   url: string,
   ratio: number,
+  fill = 0.94,
 ): Promise<CutoutResult> {
-  const key = `${url}|${ratio}`
+  const key = `${url}|${ratio}|${fill}`
   const hit = cache.get(key)
   if (hit) return hit
 
   let result: CutoutResult
   try {
-    result = { ok: true, url: clearBackground(await loadReadable(url), ratio) }
+    result = { ok: true, url: clearBackground(await loadReadable(url), ratio, fill) }
   } catch (err) {
     // A tainted canvas throws on export; a refused load throws on load. Both
     // mean the same thing to anyone using this.

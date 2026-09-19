@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { cutRatio, type Category } from '../categories'
+import { cutFill, cutRatio, type Category } from '../categories'
 import { cutOutBackground } from '../cutout'
 import type { Item } from '../types'
 
@@ -44,7 +44,7 @@ export default function Cover({
     setRefused(false)
     if (!item.cutout || !item.cover || !shown) return
     let live = true
-    cutOutBackground(item.cover, cutRatio(category)).then((result) => {
+    cutOutBackground(item.cover, cutRatio(category), cutFill(category)).then((result) => {
       if (!live) return
       if (result.ok) setCut(result.url)
       else setRefused(true)

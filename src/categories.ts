@@ -47,6 +47,13 @@ export interface Category {
    * so the filters are built from whatever themes are actually on the shelf.
    */
   filterByCreator?: boolean
+  /**
+   * A cut-out cover fills the same frame an uncut one does, rather than being
+   * stood at a common height in a wider tile (see cutRatio). For books: they
+   * aren't a row of identical cases, and a cut-out jacket should be as big as
+   * its neighbours' framed ones.
+   */
+  cutFillsFrame?: boolean
   /** An extra single-choice field, for shelves that want one. */
   tagGroup?: {
     label: string
@@ -160,6 +167,7 @@ export const CATEGORIES: Category[] = [
     detailLabel: 'Edition',
     detailHint: 'Hardcover, 1st',
     ratio: 2 / 3,
+    cutFillsFrame: true,
     tagGroup: {
       label: 'Kind',
       options: ['Novel', 'Cookbook', 'Graphic Novel', 'Coffee table'],
@@ -259,7 +267,11 @@ export const CATEGORIES: Category[] = [
  * different height.
  */
 export const cutRatio = (category: Category): number =>
-  Math.max(category.ratio, 1.1)
+  category.cutFillsFrame ? category.ratio : Math.max(category.ratio, 1.1)
+
+/** How much of its tile a cut-out takes: all of it, or a margin's worth less. */
+export const cutFill = (category: Category): number =>
+  category.cutFillsFrame ? 1 : 0.94
 
 /** What to call a shelf's tag, which depends on whether the thing is owned. */
 export function tagLabel(category: Category, status: Status): string {
