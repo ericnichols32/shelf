@@ -1481,3 +1481,136 @@ select {
     animation: none;
   }
 }
+
+/* ------------------------------------------------------------------ *
+ * Grid / crate switch, in the top bar
+ * ------------------------------------------------------------------ */
+
+.viewswitch {
+  display: flex;
+  gap: 2px;
+  margin-right: 6px;
+}
+
+.viewswitch__btn {
+  width: 34px;
+  height: 34px;
+  display: grid;
+  place-items: center;
+  border-radius: 999px;
+  color: var(--faint);
+  transition: color 0.15s ease, background 0.15s ease;
+}
+
+.viewswitch__btn[aria-pressed='true'] {
+  color: var(--ink);
+  background: var(--accent-soft);
+}
+
+.viewswitch__btn svg {
+  width: 16px;
+  height: 16px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.3;
+}
+
+/* ------------------------------------------------------------------ *
+ * The crate — one record at a time, the rest peeking over its top
+ * ------------------------------------------------------------------ */
+
+.crate {
+  --size: max(220px, min(84vw, 440px, calc(100svh - 520px)));
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding-top: 12px;
+}
+
+.crate__stage {
+  position: relative;
+  width: 100%;
+  height: calc(var(--size) + var(--peek));
+  touch-action: none;
+  user-select: none;
+  -webkit-user-select: none;
+  cursor: grab;
+}
+
+.crate__stage:active {
+  cursor: grabbing;
+}
+
+.crate__sleeve {
+  position: absolute;
+  left: 50%;
+  top: var(--peek);
+  width: var(--size);
+  transform-origin: top center;
+  will-change: transform;
+  border-radius: 4px;
+  box-shadow:
+    0 -1px 3px rgba(20, 16, 12, 0.18),
+    0 10px 28px rgba(20, 16, 12, 0.22);
+}
+
+.crate__art {
+  position: relative;
+  width: 100%;
+  aspect-ratio: var(--ratio, 1);
+  overflow: hidden;
+  border-radius: 4px;
+  background: var(--sand);
+}
+
+.crate__art img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+  pointer-events: none;
+  -webkit-user-drag: none;
+}
+
+.crate__caption {
+  text-align: center;
+  margin-top: 26px;
+  padding: 0 var(--gutter);
+  animation: crate-in 0.3s ease;
+}
+
+.crate__title {
+  font-family: var(--display);
+  font-size: 26px;
+  line-height: 1.15;
+  margin: 0;
+}
+
+.crate__creator {
+  margin: 6px 0 0;
+  font-size: 17px;
+  color: var(--accent);
+}
+
+.crate__meta {
+  margin: 10px 0 0;
+  color: var(--muted);
+}
+
+.crate__count {
+  margin: 14px 0 0;
+  color: var(--faint);
+}
+
+@keyframes crate-in {
+  from {
+    opacity: 0;
+    transform: translateY(4px);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .crate__caption {
+    animation: none;
+  }
+}

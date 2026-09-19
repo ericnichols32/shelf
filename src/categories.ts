@@ -59,6 +59,8 @@ export interface Category {
    * a record sleeve is the object itself, the way it is on the item's page.
    */
   frameless?: boolean
+  /** Offers the crate view — one at a time, flicked through — beside the grid. */
+  crate?: boolean
   /** An extra single-choice field, for shelves that want one. */
   tagGroup?: {
     label: string
@@ -124,6 +126,7 @@ export const CATEGORIES: Category[] = [
     creatorHint: 'Fleetwood Mac',
     listOrder: 'creator-first',
     frameless: true,
+    crate: true,
     detailLabel: 'Pressing',
     detailHint: '2021 reissue, clear',
     ratio: 1,

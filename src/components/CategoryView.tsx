@@ -5,6 +5,8 @@ import { useCanEdit } from '../edit'
 import type { Item, Status } from '../types'
 import ItemCard from './ItemCard'
 import ArrangeList from './ArrangeList'
+import Crate from './Crate'
+import { useView } from '../viewmode'
 
 export default function CategoryView({
   category,
@@ -25,6 +27,8 @@ export default function CategoryView({
 }) {
   /** Which tag the feed is narrowed to, or null for all of them. */
   const canEdit = useCanEdit()
+  const view = useView(category.id)
+  const crate = Boolean(category.crate) && view === 'crate'
   const [tag, setTag] = useState<string | null>(null)
   /** Arranging the list by hand. Only ever offered to whoever may edit. */
   const [arranging, setArranging] = useState(false)
@@ -149,6 +153,10 @@ export default function CategoryView({
 
       {arranging ? (
         <ArrangeList items={onThisSide} onReorder={onReorder} />
+      ) : shown.length > 0 && crate ? (
+        // A different list — another side, another filter — starts again
+        // at the front of the crate.
+        <Crate key={shown.map((i) => i.id).join()} category={category} items={shown} />
       ) : shown.length > 0 ? (
         <div className="feed">
           {shown.map((item, i) => (

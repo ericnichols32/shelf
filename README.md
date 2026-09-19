@@ -105,6 +105,20 @@ Nothing is stored. A cut-out PNG runs to several hundred kilobytes, which would
 be far too much to keep per item, so it is redone from the original each time —
 about 30ms, and only for the covers actually on screen.
 
+## The crate view (Vinyls)
+
+The two small icons at the top right of the Vinyls page switch between the grid
+and the **crate**: one record at a time, front and centre, with the tops of the
+next seven showing above it, smaller and darker the further back they sit. Pull
+the front record down with your thumb and it tips forward and drops away, the
+next one comes forward, and the one you pulled goes round to the back — the
+crate never runs out, it comes round again. Push up to bring the last one back.
+A quick flick goes through several. Tap the front record to open it, or the
+top of one behind to bring it straight to the front. On a computer, the scroll
+wheel and the arrow keys do the same. Each device remembers which view you
+last used. Tabs and filters still apply: the crate holds whatever the grid
+would show.
+
 ## Adding from a link or a photo
 
 The top of every Add form says **Fill it in for me**.

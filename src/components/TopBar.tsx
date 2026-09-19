@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
-import { CATEGORIES } from '../categories'
+import { byId, CATEGORIES } from '../categories'
+import { setView, useView } from '../viewmode'
 import { go } from '../route'
 
 export default function TopBar({
@@ -26,12 +27,48 @@ export default function TopBar({
         <span className="label">Collection &amp; Wish List</span>
       )}
       <span className="topbar__spacer" />
+      {shelfMenu && byId(shelfMenu.current)?.crate && <ViewSwitch shelf={shelfMenu.current} />}
       <button
         className="iconbtn"
         onClick={onTheme}
         aria-label={theme === 'dark' ? 'Switch to light' : 'Switch to dark'}
       >
         {theme === 'dark' ? '☀' : '☾'}
+      </button>
+    </div>
+  )
+}
+
+/** Grid or crate, for a shelf that offers both. */
+function ViewSwitch({ shelf }: { shelf: string }) {
+  const view = useView(shelf)
+  return (
+    <div className="viewswitch" role="group" aria-label="How to show this shelf">
+      <button
+        className="viewswitch__btn"
+        aria-pressed={view === 'grid'}
+        aria-label="Grid"
+        title="Grid"
+        onClick={() => setView(shelf, 'grid')}
+      >
+        <svg viewBox="0 0 16 16" aria-hidden="true">
+          <rect x="1.5" y="1.5" width="5.5" height="5.5" />
+          <rect x="9" y="1.5" width="5.5" height="5.5" />
+          <rect x="1.5" y="9" width="5.5" height="5.5" />
+          <rect x="9" y="9" width="5.5" height="5.5" />
+        </svg>
+      </button>
+      <button
+        className="viewswitch__btn"
+        aria-pressed={view === 'crate'}
+        aria-label="Crate — one at a time"
+        title="Crate"
+        onClick={() => setView(shelf, 'crate')}
+      >
+        <svg viewBox="0 0 16 16" aria-hidden="true">
+          <path d="M4.5 1.5h7M3 4h10" />
+          <rect x="1.5" y="6.5" width="13" height="8" />
+        </svg>
       </button>
     </div>
   )
