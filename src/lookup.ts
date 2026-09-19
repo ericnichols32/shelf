@@ -38,7 +38,7 @@ async function json(url: string, signal: AbortSignal, headers?: HeadersInit) {
 }
 
 /** Does this image URL actually resolve? The CDNs below 404 rather than lie. */
-function imageExists(url: string): Promise<boolean> {
+export function imageExists(url: string): Promise<boolean> {
   return new Promise((resolve) => {
     const img = new Image()
     const done = (ok: boolean) => resolve(ok)
@@ -154,6 +154,8 @@ async function printIsbn(
   workKey: string | undefined,
   fallback: string[] | undefined,
   signal: AbortSignal,
+  /** When given, filled with every printed edition, best first. */
+  ranked?: string[],
 ): Promise<string | undefined> {
   const first = fallback?.find((i) => i.length === 13) ?? fallback?.[0]
   if (!workKey) return first
@@ -195,7 +197,38 @@ async function printIsbn(
     printed.find(isUs) ??
     printed.find(english) ??
     printed[0]
-  return chosen.isbn_13?.[0] ?? first
+  if (!ranked) return chosen.isbn_13?.[0] ?? first
+
+  const rank = (e: (typeof printed)[number]) =>
+    (isUs(e) ? 0 : 2) + (english(e) ? 0 : 1)
+  const order = [chosen, ...[...printed].sort((a, b) => rank(a) - rank(b))]
+  ranked.push(...new Set(order.map((e) => e.isbn_13![0])))
+  return ranked[0]
+}
+
+/**
+ * Every printed edition's ISBN, likeliest first — for trying one after another
+ * against a bookshop until its page turns up.
+ */
+export async function bookIsbns(
+  title: string,
+  creator: string,
+  signal: AbortSignal,
+): Promise<string[]> {
+  const term = encodeURIComponent(`${title} ${creator}`.trim())
+  const data = await json(
+    `https://openlibrary.org/search.json?q=${term}&limit=5&fields=key,title,isbn`,
+    signal,
+  ).catch(() => null)
+  const docs: Array<{ key?: string; title: string; isbn?: string[] }> = data?.docs ?? []
+  const hit = docs.length ? bestByTitle(docs, title, (d) => d.title) : undefined
+  if (!hit) return []
+  const ranked: string[] = []
+  await printIsbn(hit.key, hit.isbn, signal, ranked)
+  if (!ranked.length) {
+    ranked.push(...(hit.isbn ?? []).filter((i) => i.length === 13))
+  }
+  return ranked
 }
 
 async function lego(qy: Query): Promise<Found | null> {

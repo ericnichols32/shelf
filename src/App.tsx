@@ -199,7 +199,12 @@ export default function App() {
           ? bar(undefined, { current: category.id })
           : bar({ label: category.name, to: `/c/${category.id}` })}
         {route.name === 'new' && (
-          <ItemForm category={category} initialStatus={side} onSave={add} />
+          <ItemForm
+            key={category.id}
+            category={category}
+            initialStatus={side}
+            onSave={add}
+          />
         )}
         {route.name === 'import' && (
           <ImportList

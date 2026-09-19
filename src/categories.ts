@@ -22,6 +22,8 @@ export interface Category {
   name: string
   /** Lowercase noun for running text: "no records yet". */
   noun: string
+  /** An example title for the empty Title box. */
+  titleHint: string
   creatorLabel: string
   creatorHint: string
   detailLabel: string
@@ -105,6 +107,7 @@ export const CATEGORIES: Category[] = [
     id: 'vinyl',
     name: 'Vinyls',
     noun: 'records',
+    titleHint: 'Rumours',
     creatorLabel: 'Artist',
     creatorHint: 'Fleetwood Mac',
     listOrder: 'creator-first',
@@ -128,6 +131,7 @@ export const CATEGORIES: Category[] = [
     id: 'bluray',
     name: 'Blu-rays',
     noun: 'discs',
+    titleHint: 'Heat',
     creatorLabel: 'Director',
     creatorHint: 'Michael Mann',
     detailLabel: 'Edition',
@@ -150,6 +154,7 @@ export const CATEGORIES: Category[] = [
     id: 'books',
     name: 'Books',
     noun: 'books',
+    titleHint: 'Piranesi',
     creatorLabel: 'Author',
     creatorHint: 'Ursula K. Le Guin',
     detailLabel: 'Edition',
@@ -190,6 +195,7 @@ export const CATEGORIES: Category[] = [
     id: 'lego',
     name: 'LEGO',
     noun: 'sets',
+    titleHint: 'Rivendell',
     creatorLabel: 'Theme',
     creatorHint: 'Icons',
     filterByCreator: true,
@@ -219,6 +225,7 @@ export const CATEGORIES: Category[] = [
     id: 'switch',
     name: 'Video Games',
     noun: 'games',
+    titleHint: 'Mario Kart World',
     creatorLabel: 'Publisher',
     creatorHint: 'Nintendo',
     detailLabel: 'Format',

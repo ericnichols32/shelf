@@ -6,9 +6,9 @@
 // white brick in a LEGO set — is not connected to the border, so it stays.
 //
 // The catch is that reading an image's pixels is something the site hosting it
-// has to permit. Plenty don't, and there is no way around that from a browser:
-// the canvas is marked tainted and refuses to be exported. So this reports
-// which happened, and the form tells the truth about it.
+// has to permit. Plenty don't, so a refused picture is fetched a second time
+// through a free image service that does permit it (see `proxied`). Only if
+// that fails too does this report the cut-out as blocked.
 
 export type CutoutResult =
   | { ok: true; url: string }
@@ -162,6 +162,25 @@ function trim(
   return out.toDataURL('image/png')
 }
 
+/**
+ * The same picture, fetched through wsrv.nl — a free, long-running image
+ * service that re-serves any public image with permission to read its pixels.
+ * Hosts that refuse a cross-origin read (TMDB, most shops) can still be cut
+ * out this way. Capped at 1200px, which is more than a tile ever shows.
+ */
+const proxied = (url: string) =>
+  `https://wsrv.nl/?url=${encodeURIComponent(url)}&w=1200&h=1200&fit=inside&we`
+
+/** The picture with its pixels readable: directly if the host allows, else proxied. */
+async function loadReadable(url: string): Promise<HTMLImageElement> {
+  try {
+    return await load(url)
+  } catch {
+    if (url.startsWith('data:')) throw new Error('blocked')
+    return load(proxied(url))
+  }
+}
+
 export async function cutOutBackground(
   url: string,
   ratio: number,
@@ -172,7 +191,7 @@ export async function cutOutBackground(
 
   let result: CutoutResult
   try {
-    result = { ok: true, url: clearBackground(await load(url), ratio) }
+    result = { ok: true, url: clearBackground(await loadReadable(url), ratio) }
   } catch (err) {
     // A tainted canvas throws on export; a refused load throws on load. Both
     // mean the same thing to anyone using this.

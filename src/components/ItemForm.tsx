@@ -1,6 +1,9 @@
 import { useEffect, useRef, useState } from 'react'
-import { tagLabel, type Category } from '../categories'
+import { shopName, tagLabel, type Category } from '../categories'
 import { canLookUp, lookup, lookupKey, type LookupState } from '../lookup'
+import { fromLink, fromPhoto, type Filled } from '../quickadd'
+import { defaultStore, rememberStore } from '../stores'
+import { asUrl, looksLikeUrl } from '../web'
 import { back, go } from '../route'
 import { EMPTY_ITEM, type Item, type NewItem, type Status } from '../types'
 import Cover from './Cover'
@@ -29,6 +32,40 @@ export default function ItemForm({
 
   const set = (key: keyof NewItem) => (e: { target: { value: string } }) =>
     setValues((v) => ({ ...v, [key]: e.target.value }))
+
+  /** What the link or photo turned up, poured into the form. */
+  const fill = (filled: Filled) => {
+    const found = Object.fromEntries(
+      Object.entries(filled).filter(([, v]) => v !== undefined && v !== ''),
+    ) as Filled
+    if (found.cover) {
+      coverIsMine.current = true
+      setState({
+        phase: 'found',
+        source: found.link ? shopName(found.link) : 'the page',
+      })
+    }
+    lastKey.current = lookupKey(category.id, {
+      title: found.title ?? '',
+      creator: found.creator ?? '',
+      detail: found.detail ?? '',
+    })
+    setValues((v) => ({ ...v, ...found }))
+  }
+
+  // A link pasted where the title goes means "fill this in from that page".
+  const onTitle = (e: { target: { value: string } }) => {
+    const text = e.target.value
+    if (!existing && looksLikeUrl(text)) {
+      const url = asUrl(text)
+      setValues((v) => ({ ...v, title: '', link: url }))
+      setLinkToRead({ url })
+      return
+    }
+    set('title')(e)
+  }
+  // An object, so pasting the same link twice still reads it twice.
+  const [linkToRead, setLinkToRead] = useState<{ url: string } | null>(null)
 
   // Look the cover up once the typing settles. Only ever fills blanks: the
   // title and any field already written stay exactly as they were.
@@ -98,12 +135,16 @@ export default function ItemForm({
         ))}
       </div>
 
+      {!existing && (
+        <QuickFill category={category} onFill={fill} link={linkToRead} />
+      )}
+
       <label className="field">
         <span className="label">Title</span>
         <input
           value={values.title}
-          onChange={set('title')}
-          placeholder="Rumours"
+          onChange={onTitle}
+          placeholder={existing ? category.titleHint : `${category.titleHint}, or paste a link`}
           autoFocus
           required
         />
@@ -220,6 +261,141 @@ export default function ItemForm({
         </p>
       )}
     </form>
+  )
+}
+
+/**
+ * Filling the form in from a link or a photo.
+ *
+ * The link half has no controls of its own — it is the Title box, which
+ * notices a pasted address. This shows its progress, and holds the photo half:
+ * the shop you're standing in, and a button that opens the camera.
+ */
+function QuickFill({
+  category,
+  onFill,
+  link,
+}: {
+  category: Category
+  onFill: (filled: Filled) => void
+  /** A link just pasted into Title, to read. */
+  link: { url: string } | null
+}) {
+  const [store, setStore] = useState(() => defaultStore(category))
+  const [status, setStatus] = useState<{ text: string; busy: boolean; bad?: boolean } | null>(null)
+  const [photo, setPhoto] = useState<string | null>(null)
+  const camera = useRef<HTMLInputElement>(null)
+  const running = useRef<AbortController | null>(null)
+  // Read at the moment the shop is searched, so it can be typed while the
+  // photo is still being read.
+  const storeNow = useRef(store)
+
+  useEffect(() => () => running.current?.abort(), [])
+  useEffect(() => () => void (photo && URL.revokeObjectURL(photo)), [photo])
+
+  const run = async (work: (signal: AbortSignal, step: (t: string) => void) => Promise<string | undefined>) => {
+    running.current?.abort()
+    const controller = new AbortController()
+    running.current = controller
+    const step = (text: string) => {
+      if (!controller.signal.aborted) setStatus({ text, busy: true })
+    }
+    try {
+      const note = await work(controller.signal, step)
+      if (controller.signal.aborted) return
+      setStatus({
+        text: note ?? 'Filled in — check it over, pick a tag, and add it.',
+        busy: false,
+        bad: Boolean(note),
+      })
+    } catch (err) {
+      if (controller.signal.aborted) return
+      setStatus({
+        text: (err as Error)?.message || 'Something went wrong.',
+        busy: false,
+        bad: true,
+      })
+    }
+  }
+
+  useEffect(() => {
+    if (!link) return
+    setPhoto(null)
+    run(async (signal, step) => {
+      try {
+        onFill(await fromLink(category, link.url, signal, step))
+        return undefined
+      } catch (err) {
+        if ((err as Error)?.name === 'AbortError') throw err
+        throw new Error('Couldn’t read that page. The link is kept below — type the title in.')
+      }
+    })
+    // Only a new paste starts a new read.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [link])
+
+  const onPhoto = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0]
+    e.target.value = ''
+    if (!file) return
+    setPhoto(URL.createObjectURL(file))
+    if (store.trim()) rememberStore(category, store)
+    run(async (signal, step) => {
+      const { filled, note } = await fromPhoto(category, file, () => storeNow.current, signal, step)
+      onFill(filled)
+      return note
+    })
+  }
+
+  return (
+    <div className="quick">
+      <span className="label">Fill it in for me</span>
+      <p className="quick__how">
+        Paste a link into Title below, or take a photo of it in the shop.
+      </p>
+      <div className="quick__row">
+        <label className="quick__store">
+          <span className="label">Shop</span>
+          <input
+            value={store}
+            onChange={(e) => {
+              setStore(e.target.value)
+              storeNow.current = e.target.value
+            }}
+            placeholder="Where you are"
+            autoComplete="off"
+          />
+        </label>
+        <button
+          type="button"
+          className="btn btn--solid quick__camera"
+          onClick={() => camera.current?.click()}
+        >
+          Take a photo
+        </button>
+        <input
+          ref={camera}
+          type="file"
+          accept="image/*"
+          capture="environment"
+          hidden
+          onChange={onPhoto}
+        />
+      </div>
+      {(photo || status) && (
+        <div className="quick__result">
+          {photo && <img className="quick__photo" src={photo} alt="" />}
+          {status && (
+            <p
+              className={`quick__status ${status.busy ? 'quick__status--busy' : ''} ${status.bad ? 'quick__status--bad' : ''}`}
+              role="status"
+            >
+              {status.text}
+            </p>
+          )}
+        </div>
+      )}
+    </div>
   )
 }
 

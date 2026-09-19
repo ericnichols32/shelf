@@ -76,13 +76,14 @@ anything near-white it can reach. Starting from the edges is the whole trick:
 white *inside* the picture — a sky, a logo, a white brick — isn't connected to
 the border, so it survives.
 
-**It depends on the picture's host.** Reading another site's pixels is something
-that site has to permit, and many don't; there is no way around that from a
-browser. Open Library, Apple Music and BrickLink allow it. TMDB and Rebrickable
-don't, and shop sites often won't either. The preview under the cover box always
-shows what you'll actually get, so you can try another link if one won't do.
+**Some picture hosts refuse, so those go the long way round.** Reading another
+site's pixels is something that site has to permit. Open Library, Apple Music and
+BrickLink do; TMDB, Rebrickable and most shops don't. A refused picture is
+fetched again through [wsrv.nl](https://wsrv.nl), a free image service that
+re-serves any public picture with permission to read it, and cut out from that.
+The preview under the cover box always shows what you'll actually get.
 
-When a host refuses, a light theme still gets most of the way there: the picture
+If even that fails, a light theme still gets most of the way there: the picture
 is multiplied against the page, and white against warm paper simply disappears.
 That trick can't work on a dark background, so in a dark theme those pictures
 are shown whole rather than turned to mud.
@@ -103,6 +104,53 @@ cut-out covers sit in a wider tile than photographs do.
 Nothing is stored. A cut-out PNG runs to several hundred kilobytes, which would
 be far too much to keep per item, so it is redone from the original each time —
 about 30ms, and only for the covers actually on screen.
+
+## Adding from a link or a photo
+
+The top of every Add form says **Fill it in for me**.
+
+**Paste a link into Title.** Any shop's product page — Rough Trade, Gruv, McNally
+Jackson, LEGO, Nintendo, anywhere. The page is read and the form fills in: the
+title, the artist / director / author / theme / publisher, the year, the cover,
+and the link itself, which becomes the buy button. What's left is the tag.
+
+**Or take a photo.** Standing in a shop: type the shop's name in the **Shop** box
+(it starts on the shelf's usual shop, then remembers the last one you used), tap
+**Take a photo**, and photograph the cover. The photo is read to work out what
+it is; then the shop's website is found, the item is found on it, and that page
+gives the link and the cover — exactly as if you'd pasted its address. You can
+type the shop's name while the photo is still being read.
+
+Books are found on a bookshop's site by ISBN, edition by edition, which is how
+most American bookshops (McNally Jackson, Books Are Magic, Powell's) address
+their pages. Shopify shops like Gruv are asked through their own product search,
+and anything else through a web search limited to that shop's site. If the shop
+doesn't have it, the cover comes from the usual free catalogue and the link is
+left blank, and the form says so.
+
+**Covers are cut out where the rest of the shelf is.** Blu-rays and LEGO sets are
+boxes, cut out and stood at a common height, so a new one arrives cut out too.
+Records, books and games are artwork edge to edge, and are left whole — cutting
+Rumours took out the white it's photographed on.
+
+**How it's done, and what it costs: nothing.**
+
+- *Reading pages* goes through [Jina's reader](https://jina.ai/reader), free and
+  keyless, about twenty pages a minute — adding one thing uses three to eight.
+  If it says it's busy, wait a minute. Microlink stands in when a page won't read.
+- *Searching* is DuckDuckGo, read the same way.
+- *Reading photos*, and tidying shop titles like "Rumours - Vinyl, CD | Rough
+  Trade - (LP - Black, 2LP - Black)", is **Gemini**, through Firebase AI Logic on
+  the collection's own Firebase project. That uses Google's free tier: the
+  project is on the no-cost Spark plan with no card attached, so it can't be
+  billed — past the free daily allowance it simply says no. Google may use what's
+  sent on the free tier to improve its products; here that's photos of book
+  covers and public shop pages. Without Gemini, links still work (the titles are
+  tidied by rule instead) but photos don't.
+
+**Switching Gemini on (once):** [Firebase console](https://console.firebase.google.com/project/eric-s-wish-list/ailogic/)
+→ **AI Logic** → **Get started** → choose **Gemini Developer API** (the free one —
+*not* Vertex AI, which needs billing) → follow it through. Skip App Check.
 
 ## Where the buy links go
 
@@ -424,13 +472,6 @@ Five sets are in `src/prepared.ts`, loaded from the LEGO *Paste a list* screen.
 
 ## What isn't built yet
 
-**Pulling from your LEGO account and the Nintendo eShop.** You asked for a daily
-crawl of your LEGO wish list and collection, and the same for Switch 2 games.
-Both need a server that can log in as you and fetch on a schedule — a browser
-tab can't, and shouldn't hold those credentials. It's a real piece of work, and
-it's the same server that would make the exact-product buy links above possible.
-Worth doing as one project rather than three.
-
 **Search and sort within a shelf.** Fine at thirty items, wanted at three
 hundred.
 
@@ -443,6 +484,11 @@ empty shelf.
 src/
   categories.ts     the five shelves: labels, cover shapes, tags, where to buy
   lookup.ts         finding cover art, one source per shelf
+  quickadd.ts       filling a new item in from a link or a photo
+  web.ts            reading shop pages and searching, through Jina's reader
+  ai.ts             Gemini, through Firebase AI Logic
+  stores.ts         from a shop's name to its website
+  cutout.ts         taking the white background off a cover
   types.ts          what an item is, and migrating older saved ones
   route.ts          hash routing, and share mode
   backend/

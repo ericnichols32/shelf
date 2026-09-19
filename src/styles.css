@@ -1376,3 +1376,100 @@ select {
   font-size: 13.5px;
   color: var(--accent);
 }
+
+/* ------------------------------------------------------------------ *
+ * Fill it in for me — a link or a photo
+ * ------------------------------------------------------------------ */
+
+.quick {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin-bottom: 26px;
+  padding: 16px;
+  border: 1px solid var(--sand);
+  border-radius: var(--radius);
+  background: var(--raised);
+}
+
+.quick__how {
+  margin: 0;
+  color: var(--muted);
+  font-size: 0.95rem;
+}
+
+.quick__row {
+  display: flex;
+  gap: 10px;
+  align-items: flex-end;
+}
+
+.quick__store {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.quick__store input {
+  width: 100%;
+  color: var(--ink);
+  background: transparent;
+  border: 0;
+  border-bottom: 1px solid var(--sand-deep);
+  padding: 8px 0 9px;
+  font-family: var(--body);
+  font-size: 17px;
+  outline: none;
+}
+
+.quick__store input:focus {
+  border-bottom-color: var(--accent);
+}
+
+.quick__camera {
+  flex: none;
+  white-space: nowrap;
+}
+
+.quick__result {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+}
+
+.quick__photo {
+  width: 56px;
+  height: 56px;
+  object-fit: cover;
+  border-radius: var(--radius);
+  flex: none;
+}
+
+.quick__status {
+  margin: 0;
+  font-size: 0.95rem;
+  color: var(--ink);
+}
+
+.quick__status--busy {
+  color: var(--muted);
+  animation: quick-pulse 1.4s ease-in-out infinite;
+}
+
+.quick__status--bad {
+  color: var(--accent);
+}
+
+@keyframes quick-pulse {
+  50% {
+    opacity: 0.45;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .quick__status--busy {
+    animation: none;
+  }
+}
