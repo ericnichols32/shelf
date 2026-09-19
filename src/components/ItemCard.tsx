@@ -19,7 +19,9 @@ export default function ItemCard({ item, index }: { item: Item; index: number })
       style={{ ['--tilt' as string]: TILTS[index % TILTS.length] } as React.CSSProperties}
       onClick={() => go(`/i/${item.id}`)}
     >
-      <span className={`card__frame ${item.cutout ? 'card__frame--bare' : ''}`}>
+      <span
+        className={`card__frame ${item.cutout ? 'card__frame--bare' : category.frameless ? 'card__frame--flat' : ''}`}
+      >
         <Cover item={item} category={category} className="card__art" />
       </span>
       <span className="card__caption">

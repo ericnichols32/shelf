@@ -892,6 +892,14 @@ select {
 /* With its background gone, a box wants no container either: no frame, no
    tile, no shadow. It sits directly on the page, and the only thing holding
    space is the ratio box the layout needs to stay steady. */
+/* The artwork alone, at the size the mounted card would be: the mount's
+   padding goes, the shadow stays on the sleeve's own edge. */
+.card__frame--flat {
+  padding: 0;
+  background: none;
+  border: 0;
+}
+
 .card__frame--bare {
   background: none;
   border: 0;

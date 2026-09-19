@@ -54,6 +54,11 @@ export interface Category {
    * its neighbours' framed ones.
    */
   cutFillsFrame?: boolean
+  /**
+   * Feed cards show the artwork edge to edge, with no white mount around it —
+   * a record sleeve is the object itself, the way it is on the item's page.
+   */
+  frameless?: boolean
   /** An extra single-choice field, for shelves that want one. */
   tagGroup?: {
     label: string
@@ -118,6 +123,7 @@ export const CATEGORIES: Category[] = [
     creatorLabel: 'Artist',
     creatorHint: 'Fleetwood Mac',
     listOrder: 'creator-first',
+    frameless: true,
     detailLabel: 'Pressing',
     detailHint: '2021 reissue, clear',
     ratio: 1,
