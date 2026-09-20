@@ -16,7 +16,9 @@ import Cover from './Cover'
  * back of the pile — so the crate never runs out, it just comes round again.
  *
  * Tapping the front sleeve doesn't leave the page: the record's details and
- * its buy button come up over the artwork, which dims behind them.
+ * its buy button come up over the artwork, which dims behind them. They stay
+ * up while you carry on flicking — out of the way while the crate is moving,
+ * back again on whatever lands in front.
  *
  * Everything hangs off one number, `pos`: how many records have been flicked
  * past. Its whole part says which sleeve is in front; its fraction says how
@@ -48,6 +50,8 @@ export default function Crate({
   const [size, setSize] = useState(360)
   /** Whether the front record's details are up over its artwork. */
   const [open, setOpen] = useState(false)
+  /** True while the crate is in motion, which is when the details stand aside. */
+  const [moving, setMoving] = useState(false)
   const anim = useRef<number | null>(null)
 
   const place = useCallback((p: number) => {
@@ -55,7 +59,6 @@ export default function Crate({
     setPos(p)
   }, [])
 
-  /** Anything that moves the crate puts the details away again. */
   const shut = useCallback(() => setOpen(false), [])
 
   useLayoutEffect(() => {
@@ -79,14 +82,19 @@ export default function Crate({
       stop()
       const from = posRef.current
       const distance = target - from
-      if (Math.abs(distance) < 0.001) return place(target)
+      if (Math.abs(distance) < 0.001) {
+      setMoving(false)
+      return place(target)
+    }
       const duration = Math.min(700, 260 + Math.abs(distance) * 140)
       const start = performance.now()
+      setMoving(true)
       const step = (now: number) => {
         const t = Math.min(1, (now - start) / duration)
         const eased = 1 - Math.pow(1 - t, 3)
         place(from + distance * eased)
         anim.current = t < 1 ? requestAnimationFrame(step) : null
+        if (t >= 1) setMoving(false)
       }
       anim.current = requestAnimationFrame(step)
     },
@@ -125,7 +133,7 @@ export default function Crate({
     if (!d.moved || n < 2) return
     // Pulling down flicks forward. Pushing up brings the last one back from
     // the back of the pile, which is the same motion run backwards.
-    shut()
+    setMoving(true)
     place(d.pos + dy / (size * PULL))
     d.samples.push({ t: e.timeStamp, y: e.clientY })
     if (d.samples.length > 6) d.samples.shift()
@@ -136,16 +144,15 @@ export default function Crate({
     drag.current = null
     if (!d) return
     if (!d.moved) {
-      // A tap. On the front sleeve it opens the record; on one behind, it
-      // brings that one forward.
+      // A tap. On the front sleeve it opens the record's details, or puts
+      // them away; on one behind, it brings that one forward. A tap on the
+      // buy button or a link inside the details is that link's own business.
+      if (d.target.closest('a, button')) return
       const sleeve = d.target.closest<HTMLElement>('[data-depth]')
       const depth = Number(sleeve?.dataset.depth ?? NaN)
       if (Number.isNaN(depth)) return
       if (depth === 0) setOpen((o) => !o)
-      else {
-        shut()
-        settle(Math.round(posRef.current) + depth)
-      }
+      else settle(Math.round(posRef.current) + depth)
       return
     }
     // Carry on in the direction of the flick, a record or several.
@@ -170,7 +177,7 @@ export default function Crate({
     const onWheel = (e: WheelEvent) => {
       e.preventDefault()
       stop()
-      shut()
+      setMoving(true)
       place(posRef.current + e.deltaY / (size * 1.4))
       clearTimeout(idle)
       idle = window.setTimeout(() => settle(Math.round(posRef.current)), 140)
@@ -187,13 +194,9 @@ export default function Crate({
     const onKey = (e: KeyboardEvent) => {
       if (e.target instanceof Element && e.target.closest('input, textarea')) return
       if (e.key === 'Escape') shut()
-      else if (e.key === 'ArrowDown' || e.key === 'j') {
-        shut()
-        settle(Math.round(posRef.current) + 1)
-      } else if (e.key === 'ArrowUp' || e.key === 'k') {
-        shut()
-        settle(Math.round(posRef.current) - 1)
-      } else return
+      else if (e.key === 'ArrowDown' || e.key === 'j') settle(Math.round(posRef.current) + 1)
+      else if (e.key === 'ArrowUp' || e.key === 'k') settle(Math.round(posRef.current) - 1)
+      else return
       e.preventDefault()
     }
     window.addEventListener('keydown', onKey)
@@ -261,7 +264,7 @@ export default function Crate({
               aria-hidden={Math.round(depth) !== 0}
             >
               <Cover item={item} category={category} className="crate__art" />
-              {open && Math.round(depth) === 0 && (
+              {open && !moving && item.id === front.id && (
                 <Details item={item} category={category} onClose={shut} />
               )}
             </div>
@@ -319,12 +322,10 @@ function Details({
   ].filter(Boolean)
 
   return (
-    <div
-      className="crate__panel"
-      onPointerDown={(e) => e.stopPropagation()}
-      onClick={onClose}
-    >
-      <div className="crate__card" onClick={(e) => e.stopPropagation()}>
+    // The panel doesn't take the finger: a drag that starts on it still
+    // flicks the crate underneath, so the details are no bar to carrying on.
+    <div className="crate__panel">
+      <div className="crate__card">
         <h2 className="crate__panel-title">{item.title}</h2>
         {item.creator && <p className="crate__panel-creator">{item.creator}</p>}
         {facts.length > 0 && <p className="crate__panel-facts label">{facts.join(' · ')}</p>}

@@ -117,6 +117,8 @@ select {
 /* ---- top bar ------------------------------------------------------ */
 
 .topbar {
+  position: relative;
+  z-index: 50;
   display: flex;
   align-items: center;
   gap: 12px;
@@ -1539,6 +1541,9 @@ select {
 
 .crate__stage {
   position: relative;
+  /* A stacking context of its own, so the sleeves' layering stays a private
+     matter between them and doesn't rise above the top bar's menu. */
+  z-index: 0;
   width: var(--size);
   height: calc(var(--size) + var(--peek));
   touch-action: none;
@@ -1642,10 +1647,7 @@ select {
   backdrop-filter: blur(2px);
   animation: crate-panel 0.18s ease;
   overflow-y: auto;
-  /* The crate takes the finger everywhere else; inside the panel a long note
-     still has to be able to scroll. */
-  touch-action: pan-y;
-  cursor: default;
+  cursor: grab;
 }
 
 .crate__card {
