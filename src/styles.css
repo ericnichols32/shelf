@@ -397,6 +397,11 @@ select {
   pointer-events: auto;
 }
 
+.dock--aside {
+  justify-content: flex-end;
+  padding-right: max(16px, env(safe-area-inset-right));
+}
+
 .pill {
   display: flex;
   background: var(--raised);
@@ -1520,16 +1525,21 @@ select {
  * ------------------------------------------------------------------ */
 
 .crate {
-  --size: max(220px, min(84vw, 440px, calc(100svh - 520px)));
+  /* Narrower than the page on purpose: the crate itself takes your finger
+     rather than the page, so the bare strips down either side are what is
+     left to scroll the page with. The tall sum keeps the title, the artist
+     and the floating plus button clear of the sleeve on a phone. */
+  --size: max(200px, min(70vw, 400px, calc(100svh - 560px)));
   display: flex;
   flex-direction: column;
   align-items: center;
   padding-top: 12px;
+  padding-bottom: 96px;
 }
 
 .crate__stage {
   position: relative;
-  width: 100%;
+  width: var(--size);
   height: calc(var(--size) + var(--peek));
   touch-action: none;
   user-select: none;
@@ -1574,7 +1584,7 @@ select {
 
 .crate__caption {
   text-align: center;
-  margin-top: 26px;
+  margin-top: 20px;
   padding: 0 var(--gutter);
   animation: crate-in 0.3s ease;
 }
@@ -1611,6 +1621,112 @@ select {
 
 @media (prefers-reduced-motion: reduce) {
   .crate__caption {
+    animation: none;
+  }
+}
+
+/* ---- a record's details, over its own sleeve ---------------------------- */
+
+.crate__panel {
+  position: absolute;
+  inset: 0;
+  z-index: 2;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 16px;
+  border-radius: 4px;
+  /* The artwork dims rather than disappears: you can still see which record
+     you are reading about. */
+  background: rgba(18, 14, 10, 0.66);
+  backdrop-filter: blur(2px);
+  animation: crate-panel 0.18s ease;
+  overflow-y: auto;
+  /* The crate takes the finger everywhere else; inside the panel a long note
+     still has to be able to scroll. */
+  touch-action: pan-y;
+  cursor: default;
+}
+
+.crate__card {
+  width: 100%;
+  text-align: center;
+  color: #f4ece0;
+}
+
+.crate__panel-title {
+  font-family: var(--display);
+  font-size: 22px;
+  line-height: 1.15;
+  margin: 0;
+}
+
+.crate__panel-creator {
+  margin: 6px 0 0;
+  font-size: 16px;
+  color: #e8b79a;
+}
+
+.crate__panel-facts {
+  margin: 10px 0 0;
+  color: rgba(244, 236, 224, 0.72);
+}
+
+.crate__panel-tag {
+  margin: 12px 0 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  color: rgba(244, 236, 224, 0.72);
+}
+
+.crate__panel-tag .tagpill {
+  border-color: rgba(244, 236, 224, 0.4);
+  color: #f4ece0;
+}
+
+.crate__panel-notes {
+  margin: 12px 0 0;
+  font-size: 15px;
+  line-height: 1.5;
+  color: rgba(244, 236, 224, 0.85);
+}
+
+.crate__panel-note {
+  margin: 14px 0 0;
+  font-size: 14px;
+  color: rgba(244, 236, 224, 0.72);
+}
+
+.buy.crate__buy {
+  margin: 12px 0 0;
+  padding: 14px 16px;
+}
+
+.crate__panel-links {
+  margin: 14px 0 0;
+  display: flex;
+  justify-content: center;
+  gap: 18px;
+}
+
+.crate__panel-links .linkish {
+  color: rgba(244, 236, 224, 0.8);
+  font-family: var(--label);
+  font-size: 11px;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+}
+
+@keyframes crate-panel {
+  from {
+    opacity: 0;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .crate__panel {
     animation: none;
   }
 }

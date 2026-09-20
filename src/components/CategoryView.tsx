@@ -134,7 +134,7 @@ export default function CategoryView({
           <span />
         )}
 
-        {canEdit && onThisSide.length > 1 && (
+        {canEdit && onThisSide.length > 1 && !crate && (
           <button
             className="btn btn--quiet arrange"
             aria-pressed={arranging}
@@ -173,7 +173,9 @@ export default function CategoryView({
         />
       )}
 
-      <div className="dock">
+      {/* In the crate the caption sits in the middle of the screen's foot,
+          where a centred plus would land on top of it. */}
+      <div className={`dock ${crate ? 'dock--aside' : ''}`}>
         {canEdit && (
           <button
             className="addbtn"

@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react'
-import type { Category } from '../categories'
+import { buyLinks, tagLabel, type Category } from '../categories'
+import { useCanEdit } from '../edit'
 import { formatPrice } from '../price'
 import { go } from '../route'
 import type { Item } from '../types'
@@ -14,6 +15,9 @@ import Cover from './Cover'
  * away, the next one comes forward, and the one you pulled goes round to the
  * back of the pile — so the crate never runs out, it just comes round again.
  *
+ * Tapping the front sleeve doesn't leave the page: the record's details and
+ * its buy button come up over the artwork, which dims behind them.
+ *
  * Everything hangs off one number, `pos`: how many records have been flicked
  * past. Its whole part says which sleeve is in front; its fraction says how
  * far that sleeve has been pulled. Dragging, the wheel, the arrow keys and the
@@ -21,9 +25,9 @@ import Cover from './Cover'
  */
 
 /** How many sleeves show their tops behind the front one. */
-const BEHIND = 7
+const BEHIND = 6
 /** How much of the first sleeve behind shows, in px; each further one shows less. */
-const PEEK = 26
+const PEEK = 24
 const SHRINK = 0.8
 /** A drag this far, as a share of a sleeve's height, flicks one record. */
 const PULL = 0.75
@@ -42,12 +46,17 @@ export default function Crate({
   const posRef = useRef(0)
   const stage = useRef<HTMLDivElement>(null)
   const [size, setSize] = useState(360)
+  /** Whether the front record's details are up over its artwork. */
+  const [open, setOpen] = useState(false)
   const anim = useRef<number | null>(null)
 
   const place = useCallback((p: number) => {
     posRef.current = p
     setPos(p)
   }, [])
+
+  /** Anything that moves the crate puts the details away again. */
+  const shut = useCallback(() => setOpen(false), [])
 
   useLayoutEffect(() => {
     const el = stage.current
@@ -116,6 +125,7 @@ export default function Crate({
     if (!d.moved || n < 2) return
     // Pulling down flicks forward. Pushing up brings the last one back from
     // the back of the pile, which is the same motion run backwards.
+    shut()
     place(d.pos + dy / (size * PULL))
     d.samples.push({ t: e.timeStamp, y: e.clientY })
     if (d.samples.length > 6) d.samples.shift()
@@ -131,8 +141,11 @@ export default function Crate({
       const sleeve = d.target.closest<HTMLElement>('[data-depth]')
       const depth = Number(sleeve?.dataset.depth ?? NaN)
       if (Number.isNaN(depth)) return
-      if (depth === 0) go(`/i/${items[mod(Math.round(posRef.current), n)].id}`)
-      else settle(Math.round(posRef.current) + depth)
+      if (depth === 0) setOpen((o) => !o)
+      else {
+        shut()
+        settle(Math.round(posRef.current) + depth)
+      }
       return
     }
     // Carry on in the direction of the flick, a record or several.
@@ -157,6 +170,7 @@ export default function Crate({
     const onWheel = (e: WheelEvent) => {
       e.preventDefault()
       stop()
+      shut()
       place(posRef.current + e.deltaY / (size * 1.4))
       clearTimeout(idle)
       idle = window.setTimeout(() => settle(Math.round(posRef.current)), 140)
@@ -166,20 +180,25 @@ export default function Crate({
       el.removeEventListener('wheel', onWheel)
       clearTimeout(idle)
     }
-  }, [n, size, place, settle])
+  }, [n, size, place, settle, shut])
 
   useEffect(() => {
     if (n < 2) return
     const onKey = (e: KeyboardEvent) => {
       if (e.target instanceof Element && e.target.closest('input, textarea')) return
-      if (e.key === 'ArrowDown' || e.key === 'j') settle(Math.round(posRef.current) + 1)
-      else if (e.key === 'ArrowUp' || e.key === 'k') settle(Math.round(posRef.current) - 1)
-      else return
+      if (e.key === 'Escape') shut()
+      else if (e.key === 'ArrowDown' || e.key === 'j') {
+        shut()
+        settle(Math.round(posRef.current) + 1)
+      } else if (e.key === 'ArrowUp' || e.key === 'k') {
+        shut()
+        settle(Math.round(posRef.current) - 1)
+      } else return
       e.preventDefault()
     }
     window.addEventListener('keydown', onKey)
     return () => window.removeEventListener('keydown', onKey)
-  }, [n, settle])
+  }, [n, settle, shut])
 
   // ---- drawing ---------------------------------------------------------------
 
@@ -242,6 +261,9 @@ export default function Crate({
               aria-hidden={Math.round(depth) !== 0}
             >
               <Cover item={item} category={category} className="crate__art" />
+              {open && Math.round(depth) === 0 && (
+                <Details item={item} category={category} onClose={shut} />
+              )}
             </div>
           )
         })}
@@ -260,9 +282,84 @@ export default function Crate({
         </p>
         {n > 1 && (
           <p className="crate__count label">
-            {mod(Math.round(pos), n) + 1} of {n} &middot; pull down to flick
+            {mod(Math.round(pos), n) + 1} of {n}
+            {/* Said once, on the record you land on, and not again after
+                you've clearly worked it out. */}
+            {Math.round(pos) === 0 && <> &middot; pull down to flick</>}
           </p>
         )}
+      </div>
+    </div>
+  )
+}
+
+/**
+ * A record's details, over its own sleeve.
+ *
+ * The crate is for flicking, and being thrown onto another page halfway
+ * through breaks that. So everything the item's own page would say — what it
+ * is, and where to buy it — comes up here instead, with the artwork dimmed
+ * behind it so the words stay readable whatever the sleeve looks like.
+ */
+function Details({
+  item,
+  category,
+  onClose,
+}: {
+  item: Item
+  category: Category
+  onClose: () => void
+}) {
+  const canEdit = useCanEdit()
+  const links = buyLinks(item)
+  const facts = [
+    item.year,
+    item.detail,
+    item.status === 'wants' && item.price ? formatPrice(item.price) : '',
+  ].filter(Boolean)
+
+  return (
+    <div
+      className="crate__panel"
+      onPointerDown={(e) => e.stopPropagation()}
+      onClick={onClose}
+    >
+      <div className="crate__card" onClick={(e) => e.stopPropagation()}>
+        <h2 className="crate__panel-title">{item.title}</h2>
+        {item.creator && <p className="crate__panel-creator">{item.creator}</p>}
+        {facts.length > 0 && <p className="crate__panel-facts label">{facts.join(' · ')}</p>}
+        {item.tag && category.tagGroup && (
+          <p className="crate__panel-tag">
+            <span className="label">{tagLabel(category, item.status)}</span>
+            <span className="tagpill">{item.tag}</span>
+          </p>
+        )}
+        {item.notes && <p className="crate__panel-notes">{item.notes}</p>}
+
+        {/* Nothing to go and do about a record already on the shelf. */}
+        {item.status === 'wants' && links.primary.href && (
+          <>
+            {links.note && <p className="crate__panel-note">{links.note}</p>}
+            <a className="buy crate__buy" href={links.primary.href} target="_blank" rel="noreferrer">
+              <span>
+                {links.primary.label}
+                {item.price ? ` - ${formatPrice(item.price)}` : ''}
+              </span>
+              <span aria-hidden="true">&rarr;</span>
+            </a>
+          </>
+        )}
+
+        <p className="crate__panel-links">
+          {canEdit && (
+            <button className="linkish" onClick={() => go(`/i/${item.id}/edit`)}>
+              Edit
+            </button>
+          )}
+          <button className="linkish" onClick={onClose}>
+            Close
+          </button>
+        </p>
       </div>
     </div>
   )
