@@ -1558,6 +1558,7 @@ select {
 
 .crate__sleeve {
   position: absolute;
+  touch-action: none;
   left: 50%;
   top: var(--peek);
   width: var(--size);
@@ -1646,7 +1647,11 @@ select {
   background: rgba(18, 14, 10, 0.66);
   backdrop-filter: blur(2px);
   animation: crate-panel 0.18s ease;
-  overflow-y: auto;
+  /* Not a scrolling box, and not a place a swipe belongs to. A panel that
+     scrolls is one iOS claims the gesture for before any of this code hears
+     about it, and the page slides instead of the crate flicking. */
+  overflow: hidden;
+  touch-action: none;
   cursor: grab;
 }
 
@@ -1692,6 +1697,12 @@ select {
   margin: 12px 0 0;
   font-size: 15px;
   line-height: 1.5;
+  /* However long the note is, the panel stays the size of the sleeve. The
+     whole of it is on the record's own page. */
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 4;
+  overflow: hidden;
   color: rgba(244, 236, 224, 0.85);
 }
 
