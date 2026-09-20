@@ -1531,7 +1531,7 @@ select {
      rather than the page, so the bare strips down either side are what is
      left to scroll the page with. The tall sum keeps the title, the artist
      and the floating plus button clear of the sleeve on a phone. */
-  --size: max(200px, min(70vw, 400px, calc(100svh - 560px)));
+  --size: max(200px, min(76vw, 420px, calc(100svh - 548px)));
   display: flex;
   flex-direction: column;
   align-items: center;
