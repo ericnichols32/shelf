@@ -124,14 +124,15 @@ would show.
 The Books page has the same switch at the top right: the grid, or the
 **bookshelf**. The bookshelf gives each kind its own shelf — Novels, Coffee
 Table, Graphic Novels, Cookbooks, in that order, and a last one for anything
-not given a kind yet. Each is a row of books: the one in
-the middle faces you, the others turn away to either side. Slide a row sideways
-with your thumb to walk along it; up and down still scrolls the page from one
-shelf to the next. Tap the middle book and its details and buy buttons come up
-under that shelf; tap any other book and it slides round to the middle. On a
-computer a sideways trackpad swipe slides the row. The filter tabs step aside
-in this view, since the shelves do their job. The shelf order lives in
-`shelfRows` in `src/categories.ts`.
+not given a kind yet. Books stand **spine out**, the way they do on a real
+shelf: each spine is the main colour of its own cover (worked out from the
+picture, once, and remembered), with the title running down it, and each book
+a little different in height and thickness. One book per shelf stands
+**face-out**. Tap a spine and that book turns round to face you; tap the
+face-out book and its details and buy buttons come up under the shelf. Each
+shelf scrolls sideways with the phone's own swipe; up and down moves between
+shelves. The filter tabs step aside in this view, since the shelves do their
+job. The shelf order lives in `shelfRows` in `src/categories.ts`.
 
 ## Adding from a link or a photo
 

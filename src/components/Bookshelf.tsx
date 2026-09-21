@@ -1,20 +1,20 @@
-import { useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { tagTabLabel, type Category } from '../categories'
+import { knownSpine, spineFor, type Spine } from '../spinecolor'
 import type { Item } from '../types'
 import Cover from './Cover'
 import Peek from './Peek'
 
 /**
- * Books on shelves: a row for each kind, slid along sideways.
+ * Books on shelves, spine out.
  *
- * Each row is a line of books. The one in the middle faces you; the rest
- * turn away to either side, the further out the more, the way a row of
- * books looks when you walk along it. Slide a row with your thumb and the
- * next book comes round to face you. Up and down stays the page's — that is
- * how you get from one shelf to the next.
- *
- * Tap the book in the middle and its details, with the buy button, come up
- * under the shelf; tap any other and it slides round to the middle.
+ * A shelf for each kind. The books stand side by side the way they do on a
+ * real one, showing their spines — each in its own cover's colour, title
+ * running down it — and a little uneven in height and thickness, as books
+ * are. One book on each shelf stands face-out. Tap a spine and that book turns
+ * round to face you; tap the face-out book and its details, with the buy
+ * button, come up under the shelf. Each shelf scrolls sideways with the
+ * phone's own swipe; up and down moves between shelves.
  */
 export default function Bookshelf({
   category,
@@ -29,7 +29,7 @@ export default function Bookshelf({
     label: tagTabLabel(category, tag),
     items: items.filter((i) => i.tag === tag),
   }))
-  // Anything not yet given a kind still needs a place to stand.
+  // Anything not yet given a kind still needs somewhere to stand.
   const loose = items.filter((i) => !order.includes(i.tag))
   if (loose.length) rows.push({ key: '', label: 'Not sorted yet', items: loose })
 
@@ -38,26 +38,26 @@ export default function Bookshelf({
       {rows
         .filter((row) => row.items.length > 0)
         .map((row) => (
-          <ShelfRow
-            // A different set of books starts the row again from its first.
-            key={`${row.key}|${row.items.map((i) => i.id).join()}`}
-            label={row.label}
-            items={row.items}
-            category={category}
-          />
+          <Shelf key={row.key} label={row.label} items={row.items} category={category} />
         ))}
     </div>
   )
 }
 
-/** How many books show to either side of the middle one. */
-const SIDE = 5
-/** Clear space between neighbouring books, in px. */
-const GAP = 16
-/** How far apart the books beyond the first neighbour stand, per book width. */
-const STEP = 0.86
+/**
+ * A steady variety for each book, from its id: the same book is always the
+ * same thickness and height, and neighbours differ the way real ones do.
+ */
+function build(id: string) {
+  let h = 0
+  for (let i = 0; i < id.length; i++) h = (h * 31 + id.charCodeAt(i)) >>> 0
+  return {
+    width: 24 + (h % 13), // 24–36px thick
+    height: 0.84 + ((h >> 5) % 17) / 100, // 84–100% of the shelf
+  }
+}
 
-function ShelfRow({
+function Shelf({
   label,
   items,
   category,
@@ -66,233 +66,91 @@ function ShelfRow({
   items: Item[]
   category: Category
 }) {
-  const n = items.length
-  const [pos, setPos] = useState(0)
-  const posRef = useRef(0)
+  const [facing, setFacing] = useState(items[0]?.id ?? '')
   const [open, setOpen] = useState(false)
-  const [moving, setMoving] = useState(false)
-  const [width, setWidth] = useState(120)
-  const stage = useRef<HTMLDivElement>(null)
-  const anim = useRef<number | null>(null)
+  const rail = useRef<HTMLDivElement>(null)
 
-  const place = useCallback((p: number) => {
-    posRef.current = p
-    setPos(p)
-  }, [])
+  // If the face-out book leaves the shelf, the first one takes its place.
+  const front = items.find((i) => i.id === facing) ?? items[0]
 
-  useLayoutEffect(() => {
-    const el = stage.current
-    if (!el) return
-    const measure = () => setWidth(el.querySelector('.bookrow__book')?.clientWidth || 120)
-    measure()
-    const ro = new ResizeObserver(measure)
-    ro.observe(el)
-    return () => ro.disconnect()
-  }, [])
-
-  const stop = () => {
-    if (anim.current != null) cancelAnimationFrame(anim.current)
-    anim.current = null
-  }
-  useEffect(() => stop, [])
-
-  const clampIndex = (i: number) => Math.max(0, Math.min(n - 1, i))
-
-  const settle = useCallback(
-    (target: number) => {
-      stop()
-      const from = posRef.current
-      const distance = target - from
-      if (Math.abs(distance) < 0.001) {
-        setMoving(false)
-        return place(target)
-      }
-      const duration = Math.min(650, 240 + Math.abs(distance) * 110)
-      const start = performance.now()
-      setMoving(true)
-      const step = (now: number) => {
-        const t = Math.min(1, (now - start) / duration)
-        place(from + distance * (1 - Math.pow(1 - t, 3)))
-        anim.current = t < 1 ? requestAnimationFrame(step) : null
-        if (t >= 1) setMoving(false)
-      }
-      anim.current = requestAnimationFrame(step)
-    },
-    [place],
-  )
-
-  /** A drag this far sideways moves one book along. */
-  const stepPx = width * 0.85
-
-  // ---- dragging --------------------------------------------------------------
-
-  const drag = useRef<{
-    x: number
-    y: number
-    pos: number
-    /** Sideways is ours; up and down is the page's, and ends it. */
-    mode: 'undecided' | 'slide' | 'page'
-    target: HTMLElement
-    samples: Array<{ t: number; x: number }>
-  } | null>(null)
-
-  const onPointerDown = (e: React.PointerEvent) => {
-    stop()
-    drag.current = {
-      x: e.clientX,
-      y: e.clientY,
-      pos: posRef.current,
-      mode: 'undecided',
-      target: e.target as HTMLElement,
-      samples: [{ t: e.timeStamp, x: e.clientX }],
-    }
-  }
-
-  const onPointerMove = (e: React.PointerEvent) => {
-    const d = drag.current
-    if (!d || d.mode === 'page') return
-    const dx = e.clientX - d.x
-    const dy = e.clientY - d.y
-    if (d.mode === 'undecided') {
-      if (Math.abs(dx) < 7 && Math.abs(dy) < 7) return
-      d.mode = Math.abs(dx) > Math.abs(dy) ? 'slide' : 'page'
-      if (d.mode === 'page') return
-      try {
-        ;(e.currentTarget as HTMLElement).setPointerCapture(e.pointerId)
-      } catch {
-        // Fine without it.
-      }
-    }
-    setMoving(true)
-    // Past either end the shelf gives a little, then stops.
-    let p = d.pos - dx / stepPx
-    if (p < 0) p *= 0.3
-    if (p > n - 1) p = n - 1 + (p - (n - 1)) * 0.3
-    place(p)
-    d.samples.push({ t: e.timeStamp, x: e.clientX })
-    if (d.samples.length > 6) d.samples.shift()
-  }
-
-  const onPointerUp = () => {
-    const d = drag.current
-    drag.current = null
-    if (!d) return
-    if (d.mode === 'undecided') {
-      // A tap. The middle book opens its details or puts them away; any
-      // other slides round to the middle. Links inside the details are theirs.
-      if (d.target.closest('a, button')) return
-      const book = d.target.closest<HTMLElement>('[data-index]')
-      if (!book) return
-      const index = Number(book.dataset.index)
-      if (index === Math.round(posRef.current)) setOpen((o) => !o)
-      else settle(index)
-      return
-    }
-    if (d.mode === 'page') return
-    const first = d.samples[0]
-    const last = d.samples[d.samples.length - 1]
-    const velocity = (last.x - first.x) / Math.max(1, last.t - first.t) / stepPx
-    settle(clampIndex(Math.round(posRef.current - velocity * 200)))
-  }
-
-  const onPointerCancel = () => {
-    // The page took the gesture (a scroll); leave the row where it rests.
-    drag.current = null
-    settle(clampIndex(Math.round(posRef.current)))
-  }
-
-  // A trackpad's sideways swipe slides the row; an up-and-down one is left
-  // alone to scroll the page.
+  // Keep the face-out book in view once it has turned round.
   useEffect(() => {
-    const el = stage.current
-    if (!el || n < 2) return
-    let idle: number | undefined
-    const onWheel = (e: WheelEvent) => {
-      if (Math.abs(e.deltaX) <= Math.abs(e.deltaY)) return
-      e.preventDefault()
-      stop()
-      setMoving(true)
-      place(Math.max(-0.3, Math.min(n - 0.7, posRef.current + e.deltaX / (stepPx * 1.2))))
-      clearTimeout(idle)
-      idle = window.setTimeout(() => settle(clampIndex(Math.round(posRef.current))), 140)
-    }
-    el.addEventListener('wheel', onWheel, { passive: false })
-    return () => {
-      el.removeEventListener('wheel', onWheel)
-      clearTimeout(idle)
-    }
-    // clampIndex only reads n, which is listed.
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [n, stepPx, place, settle])
-
-  // ---- drawing ---------------------------------------------------------------
-
-  const middle = clampIndex(Math.round(pos))
-  const front = items[middle]
+    const el = rail.current?.querySelector<HTMLElement>(`[data-id="${front.id}"]`)
+    const t = setTimeout(
+      () => el?.scrollIntoView({ behavior: 'smooth', inline: 'nearest', block: 'nearest' }),
+      380,
+    )
+    return () => clearTimeout(t)
+  }, [front.id])
 
   return (
-    <section className="bookrow" aria-label={label}>
-      <h2 className="bookrow__label label">
+    <section className="case" aria-label={label}>
+      <h2 className="case__label label">
         {label}
-        <span className="bookrow__count">{n}</span>
+        <span className="case__count">{items.length}</span>
       </h2>
 
-      <div
-        className="bookrow__stage"
-        ref={stage}
-        onPointerDown={onPointerDown}
-        onPointerMove={onPointerMove}
-        onPointerUp={onPointerUp}
-        onPointerCancel={onPointerCancel}
-      >
-        {items.map((item, i) => {
-          const d = i - pos
-          const a = Math.abs(d)
-          if (a > SIDE + 1) return null
-          const sign = Math.sign(d)
-          const near = Math.min(a, 1)
-          const far = Math.max(a - 1, 0)
-          // Out from the middle with a clear gap between each book: a full
-          // step to clear the one facing you, then a little closer, each
-          // turned a little further away and set a little further back.
-          const x = sign * (near * (width + GAP) + far * (width * STEP + GAP))
-          const turn = sign * Math.min(58, near * 18 + far * 13)
-          const back = -(near * 40 + far * 36)
-          const isFront = i === middle
-          return (
-            <div
+      <div className="case__rail" ref={rail}>
+        {items.map((item) =>
+          item.id === front.id ? (
+            <button
               key={item.id}
-              className="bookrow__book"
-              data-index={i}
-              aria-hidden={!isFront}
-              style={{
-                transform: `translateX(calc(-50% + ${x}px)) translateZ(${back}px) rotateY(${turn}deg)`,
-                zIndex: 100 - Math.round(a * 10),
-                filter:
-                  isFront && open && !moving
-                    ? 'brightness(0.62)'
-                    : a > 0.02
-                      ? `brightness(${1 - Math.min(a, 4) * 0.08})`
-                      : undefined,
-                opacity: Math.max(0, Math.min(1, SIDE + 1 - a)),
-              }}
+              data-id={item.id}
+              className="case__face"
+              aria-label={`${item.title} — ${open ? 'hide' : 'show'} details`}
+              aria-expanded={open}
+              onClick={() => setOpen((o) => !o)}
             >
-              <Cover item={item} category={category} className="bookrow__art" tight />
-            </div>
-          )
-        })}
+              <Cover item={item} category={category} className="case__cover" tight />
+            </button>
+          ) : (
+            <SpineButton key={item.id} item={item} onClick={() => setFacing(item.id)} />
+          ),
+        )}
       </div>
 
-      {open && !moving ? (
-        <div className="bookrow__details">
+      {open ? (
+        <div className="case__details">
           <Peek item={front} category={category} onClose={() => setOpen(false)} />
         </div>
       ) : (
-        <div className="bookrow__caption" key={front.id}>
-          <p className="bookrow__title">{front.title}</p>
-          {front.creator && <p className="bookrow__creator">{front.creator}</p>}
+        <div className="case__caption" key={front.id}>
+          <p className="case__title">{front.title}</p>
+          {front.creator && <p className="case__creator">{front.creator}</p>}
         </div>
       )}
     </section>
+  )
+}
+
+function SpineButton({ item, onClick }: { item: Item; onClick: () => void }) {
+  const [spine, setSpine] = useState<Spine | null>(() => knownSpine(item.cover))
+  useEffect(() => {
+    if (spine) return
+    let live = true
+    spineFor(item.cover).then((s) => live && setSpine(s))
+    return () => {
+      live = false
+    }
+  }, [item.cover, spine])
+
+  const { width, height } = build(item.id)
+  return (
+    <button
+      data-id={item.id}
+      className={`spine ${spine ? '' : 'spine--waiting'}`}
+      style={
+        {
+          '--w': `${width}px`,
+          '--h': height,
+          '--spine-paper': spine?.paper,
+          '--spine-ink': spine?.ink,
+        } as React.CSSProperties
+      }
+      onClick={onClick}
+      aria-label={`${item.title}${item.creator ? `, ${item.creator}` : ''}`}
+    >
+      <span className="spine__title">{item.title}</span>
+    </button>
   )
 }
