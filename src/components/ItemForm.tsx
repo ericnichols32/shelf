@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from 'react'
 import { shopName, tagLabel, type Category } from '../categories'
 import { canLookUp, lookup, lookupKey, type LookupState } from '../lookup'
-import { fromLink, fromPhoto, type Filled } from '../quickadd'
+import { fromLink, fromSeen, identifyPhoto, seenToFilled, type Filled, type Seen } from '../quickadd'
 import { defaultStore, rememberStore } from '../stores'
 import { asUrl, looksLikeUrl } from '../web'
 import { back, go } from '../route'
@@ -144,7 +144,7 @@ export default function ItemForm({
         <input
           value={values.title}
           onChange={onTitle}
-          placeholder={existing ? category.titleHint : `${category.titleHint}, or paste a link`}
+          placeholder={category.titleHint}
           autoFocus
           required
         />
@@ -265,12 +265,16 @@ export default function ItemForm({
 }
 
 /**
- * Filling the form in from a link or a photo.
+ * Filling the form in from a photo or a link.
  *
- * The link half has no controls of its own — it is the Title box, which
- * notices a pasted address. This shows its progress, and holds the photo half:
- * the shop you're standing in, and a button that opens the camera.
+ * Three ways in, side by side: take a photo, pick one from the library, or
+ * paste a link. After a photo comes the one question it can't answer — which
+ * shop you saw it in — asked while the photo is already being read, so the
+ * answer is usually waiting by the time you've typed it. (A link pasted
+ * straight into Title still works too.)
  */
+type Stage = 'choose' | 'link' | 'shop' | 'working'
+
 function QuickFill({
   category,
   onFill,
@@ -281,14 +285,23 @@ function QuickFill({
   /** A link just pasted into Title, to read. */
   link: { url: string } | null
 }) {
+  const [stage, setStageState] = useState<Stage>('choose')
+  // Kept in step with `stage` for the photo reading, which finishes later and
+  // must not talk over a shop search that has already started.
+  const stageNow = useRef<Stage>('choose')
+  const setStage = (next: Stage) => {
+    stageNow.current = next
+    setStageState(next)
+  }
   const [store, setStore] = useState(() => defaultStore(category))
+  const [pasted, setPasted] = useState('')
   const [status, setStatus] = useState<{ text: string; busy: boolean; bad?: boolean } | null>(null)
   const [photo, setPhoto] = useState<string | null>(null)
   const camera = useRef<HTMLInputElement>(null)
+  const library = useRef<HTMLInputElement>(null)
   const running = useRef<AbortController | null>(null)
-  // Read at the moment the shop is searched, so it can be typed while the
-  // photo is still being read.
-  const storeNow = useRef(store)
+  /** The photo being read, started the moment it was chosen. */
+  const reading = useRef<Promise<Seen> | null>(null)
 
   useEffect(() => () => running.current?.abort(), [])
   useEffect(() => () => void (photo && URL.revokeObjectURL(photo)), [photo])
@@ -297,6 +310,7 @@ function QuickFill({
     running.current?.abort()
     const controller = new AbortController()
     running.current = controller
+    setStage('working')
     const step = (text: string) => {
       if (!controller.signal.aborted) setStatus({ text, busy: true })
     }
@@ -318,71 +332,174 @@ function QuickFill({
     }
   }
 
-  useEffect(() => {
-    if (!link) return
+  const readLink = (url: string) => {
     setPhoto(null)
     run(async (signal, step) => {
       try {
-        onFill(await fromLink(category, link.url, signal, step))
+        onFill({ ...(await fromLink(category, url, signal, step)) })
         return undefined
       } catch (err) {
         if ((err as Error)?.name === 'AbortError') throw err
+        onFill({ link: url })
         throw new Error('Couldn’t read that page. The link is kept below — type the title in.')
       }
     })
+  }
+
+  useEffect(() => {
+    if (link) readLink(link.url)
     // Only a new paste starts a new read.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [link])
+
+  /** Paste link: straight from the clipboard where the browser allows it. */
+  const onPasteLink = async () => {
+    try {
+      const text = (await navigator.clipboard?.readText?.())?.trim() ?? ''
+      if (looksLikeUrl(text)) return readLink(asUrl(text))
+    } catch {
+      // Not allowed, or nothing there — the box below takes it instead.
+    }
+    setStatus(null)
+    setStage('link')
+  }
 
   const onPhoto = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0]
     e.target.value = ''
     if (!file) return
+    running.current?.abort()
     setPhoto(URL.createObjectURL(file))
-    if (store.trim()) rememberStore(category, store)
+    setStage('shop')
+    setStatus({ text: 'Reading the photo…', busy: true })
+    const started = identifyPhoto(category, file)
+    reading.current = started
+    started.then(
+      (seen) => {
+        if (reading.current !== started || stageNow.current !== 'shop') return
+        // What it is goes into the form straight away; the shop adds the rest.
+        onFill(seenToFilled(category, seen))
+        const who = seen.creator ? ` by ${seen.creator}` : ''
+        setStatus({ text: `That’s ${seen.title}${who}.`, busy: false })
+      },
+      (err) => {
+        if (reading.current !== started) return
+        setStatus({ text: (err as Error)?.message || 'Couldn’t read that photo.', busy: false, bad: true })
+        setStage('working')
+      },
+    )
+  }
+
+  const findIt = (shop: string) => {
+    const seenNow = reading.current
+    if (!seenNow) return
+    if (shop.trim()) rememberStore(category, shop)
     run(async (signal, step) => {
-      const { filled, note } = await fromPhoto(category, file, () => storeNow.current, signal, step)
+      step('Reading the photo…')
+      const seen = await seenNow
+      const { filled, note } = await fromSeen(category, seen, shop, signal, step)
       onFill(filled)
       return note
     })
   }
 
+  const startOver = () => {
+    running.current?.abort()
+    reading.current = null
+    setPhoto(null)
+    setStatus(null)
+    setPasted('')
+    setStage('choose')
+  }
+
   return (
     <div className="quick">
       <span className="label">Fill it in for me</span>
-      <p className="quick__how">
-        Paste a link into Title below, or take a photo of it in the shop.
-      </p>
-      <div className="quick__row">
-        <label className="quick__store">
-          <span className="label">Shop</span>
-          <input
-            value={store}
-            onChange={(e) => {
-              setStore(e.target.value)
-              storeNow.current = e.target.value
-            }}
-            placeholder="Where you are"
-            autoComplete="off"
-          />
-        </label>
-        <button
-          type="button"
-          className="btn btn--solid quick__camera"
-          onClick={() => camera.current?.click()}
-        >
-          Take a photo
-        </button>
-        <input
-          ref={camera}
-          type="file"
-          accept="image/*"
-          capture="environment"
-          hidden
-          onChange={onPhoto}
-        />
-      </div>
-      {(photo || status) && (
+
+      {stage === 'choose' && (
+        <div className="quick__options">
+          <button type="button" className="quick__option" onClick={() => camera.current?.click()}>
+            <svg viewBox="0 0 24 24" aria-hidden="true">
+              <path d="M4 8h3l2-2.5h6L17 8h3v11H4z" />
+              <circle cx="12" cy="13" r="3.5" />
+            </svg>
+            Take picture
+          </button>
+          <button type="button" className="quick__option" onClick={() => library.current?.click()}>
+            <svg viewBox="0 0 24 24" aria-hidden="true">
+              <rect x="4" y="5" width="16" height="14" />
+              <path d="M4 16l5-5 4 4 2.5-2.5L20 17" />
+              <circle cx="15.5" cy="9.5" r="1.3" />
+            </svg>
+            Upload picture
+          </button>
+          <button type="button" className="quick__option" onClick={onPasteLink}>
+            <svg viewBox="0 0 24 24" aria-hidden="true">
+              <path d="M10 14a4 4 0 0 0 5.7 0l3-3a4 4 0 0 0-5.7-5.7l-1 1" />
+              <path d="M14 10a4 4 0 0 0-5.7 0l-3 3a4 4 0 0 0 5.7 5.7l1-1" />
+            </svg>
+            Paste link
+          </button>
+        </div>
+      )}
+
+      {stage === 'link' && (
+        <div className="quick__step">
+          <label className="quick__field">
+            <span className="label">Link</span>
+            <input
+              value={pasted}
+              onChange={(e) => {
+                setPasted(e.target.value)
+                if (looksLikeUrl(e.target.value)) readLink(asUrl(e.target.value))
+              }}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter') {
+                  e.preventDefault()
+                  if (looksLikeUrl(pasted)) readLink(asUrl(pasted))
+                }
+              }}
+              placeholder="Paste a shop’s link here"
+              inputMode="url"
+              autoComplete="off"
+              autoFocus
+            />
+          </label>
+          <button type="button" className="linkish quick__back" onClick={startOver}>
+            Back
+          </button>
+        </div>
+      )}
+
+      {stage === 'shop' && (
+        <div className="quick__step">
+          <label className="quick__field">
+            <span className="label">Which shop is it from?</span>
+            <input
+              value={store}
+              onChange={(e) => setStore(e.target.value)}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter') {
+                  e.preventDefault()
+                  findIt(store)
+                }
+              }}
+              placeholder="Shop name"
+              autoComplete="off"
+            />
+          </label>
+          <div className="quick__actions">
+            <button type="button" className="btn btn--solid" onClick={() => findIt(store)} disabled={!store.trim()}>
+              Find it there
+            </button>
+            <button type="button" className="btn btn--quiet" onClick={() => findIt('')}>
+              Skip
+            </button>
+          </div>
+        </div>
+      )}
+
+      {(photo || status) && stage !== 'choose' && stage !== 'link' ? (
         <div className="quick__result">
           {photo && <img className="quick__photo" src={photo} alt="" />}
           {status && (
@@ -394,7 +511,16 @@ function QuickFill({
             </p>
           )}
         </div>
+      ) : null}
+
+      {stage === 'working' && !status?.busy && (
+        <button type="button" className="linkish quick__back" onClick={startOver}>
+          Start again
+        </button>
       )}
+
+      <input ref={camera} type="file" accept="image/*" capture="environment" hidden onChange={onPhoto} />
+      <input ref={library} type="file" accept="image/*" hidden onChange={onPhoto} />
     </div>
   )
 }

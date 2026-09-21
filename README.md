@@ -121,19 +121,24 @@ would show.
 
 ## Adding from a link or a photo
 
-The top of every Add form says **Fill it in for me**.
+The top of every Add form says **Fill it in for me**, with three choices:
+**Take picture**, **Upload picture** and **Paste link**.
 
-**Paste a link into Title.** Any shop's product page — Rough Trade, Gruv, McNally
-Jackson, LEGO, Nintendo, anywhere. The page is read and the form fills in: the
-title, the artist / director / author / theme / publisher, the year, the cover,
-and the link itself, which becomes the buy button. What's left is the tag.
+**Paste link.** Any shop's product page — Rough Trade, Gruv, McNally Jackson,
+LEGO, Nintendo, anywhere. Where the browser allows it the link comes straight
+off the clipboard; otherwise a box opens to paste it into. (Pasting a link into
+Title does the same.) The page is read and the form fills in: the title, the
+artist / director / author / theme / publisher, the year, the cover, and the
+link itself, which becomes the buy button. What's left is the tag.
 
-**Or take a photo.** Standing in a shop: type the shop's name in the **Shop** box
-(it starts on the shelf's usual shop, then remembers the last one you used), tap
-**Take a photo**, and photograph the cover. The photo is read to work out what
-it is; then the shop's website is found, the item is found on it, and that page
-gives the link and the cover — exactly as if you'd pasted its address. You can
-type the shop's name while the photo is still being read.
+**Take or upload a picture.** Photograph the cover, or pick a picture you already
+have. It starts being read straight away, and the form asks **which shop it's
+from** — pre-filled with the shelf's usual shop, then whichever you used last.
+**Find it there** finds the shop's website, the item on it, and takes that
+page's link and cover, exactly as if you'd pasted its address. **Skip** leaves
+the link to the shelf's usual shop and takes the cover from a catalogue. The
+title and maker appear in the form as soon as the picture is read, before the
+shop search finishes.
 
 Books are found on a bookshop's site by ISBN, edition by edition, which is how
 most American bookshops (McNally Jackson, Books Are Magic, Powell's) address

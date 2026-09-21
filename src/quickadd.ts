@@ -4,8 +4,8 @@
 // (shops dress their titles up — "Rumours - Vinyl, CD | Rough Trade - (LP -
 // Black, 2LP - Black)"), and the page's own picture becomes the cover.
 //
-// From a photo: Gemini says what's in it, the shop named alongside is found
-// online, the thing is found on that shop's site, and that page supplies the
+// From a photo: Gemini says what's in it, the shop you name afterwards is
+// found online, the thing is found on that shop's site, and that page supplies the
 // link and the cover — the same as if its address had been pasted.
 //
 // Either way the free catalogues (Apple Music, TMDB, Open Library) fill any
@@ -231,7 +231,7 @@ export async function fromLink(
 
 // ---------------------------------------------------------------- from a photo
 
-interface Seen extends Details {
+export interface Seen extends Details {
   recognised: boolean
   /** Books: ISBNs Gemini knows for the American editions — checked, not trusted. */
   isbns?: string[]
@@ -255,17 +255,14 @@ const seenSchema = (S: typeof import('firebase/ai').Schema) =>
     optionalProperties: ['creator', 'year', 'detail', 'isbn', 'isbns'],
   })
 
-export async function fromPhoto(
-  category: Category,
-  photo: Blob,
-  storeName: () => string,
-  signal: AbortSignal,
-  step: Step,
-): Promise<{ filled: Filled; note?: string }> {
-  step('Reading the photo…')
+/**
+ * What's in a photo — a camera shot in a shop, or a picture from the library.
+ * Throws with a message fit to show if it can't tell.
+ */
+export async function identifyPhoto(category: Category, photo: Blob): Promise<Seen> {
   const seen = await askJson<Seen>(
     [
-      `This photo was taken in a shop. It shows ${GUIDE[category.id]} ` +
+      `This photo shows ${GUIDE[category.id]} It may be taken in a shop, or be a screenshot or a saved picture. ` +
         `Identify exactly which one it is from the cover, box or spine — use your own knowledge to complete the details. ` +
         `${TITLE_CASE} If you can't tell what it is, set recognised to false.`,
       await photoPart(photo),
@@ -275,14 +272,29 @@ export async function fromPhoto(
   if (!seen.recognised || !seen.title) {
     throw new Error('Couldn’t make out what that is — try a closer, straighter photo of the front.')
   }
+  return seen
+}
 
+/** The form's fields from a photo alone — enough to show while the shop is searched. */
+export const seenToFilled = (category: Category, seen: Seen): Filled => toFilled(category, seen)
+
+/**
+ * Everything else, once the shop is known: the item found on that shop's
+ * site gives the link and the cover, and the catalogues fill what's left. With
+ * no shop, the catalogues do it all and the link is left for the shelf's own.
+ */
+export async function fromSeen(
+  category: Category,
+  seen: Seen,
+  store: string,
+  signal: AbortSignal,
+  step: Step,
+): Promise<{ filled: Filled; note?: string }> {
   const filled = toFilled(category, seen)
-  const store = storeName().trim()
-  const who = filled.creator ? ` by ${filled.creator}` : ''
-  step(`That’s ${filled.title}${who}.${store ? ` Looking for it on ${store}…` : ''}`)
-
+  store = store.trim()
   let note: string | undefined
   if (store) {
+    step(`Looking for ${filled.title} on ${store}…`)
     const domain = await storeWebsite(store, category, signal).catch(() => null)
     const page = domain ? await findOnStore(domain, category, seen, signal) : null
     if (page) {
@@ -297,6 +309,8 @@ export async function fromPhoto(
         ? `Couldn’t find it on ${store}’s website, so the cover is from a catalogue and the link is left blank.`
         : `Couldn’t find a website for ${store}, so the link is left blank.`
     }
+  } else {
+    step('Finding the cover…')
   }
   await fillBlanks(category, filled, signal)
   return { filled, note }
