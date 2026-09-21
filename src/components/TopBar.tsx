@@ -27,7 +27,9 @@ export default function TopBar({
         <span className="label">Collection &amp; Wish List</span>
       )}
       <span className="topbar__spacer" />
-      {shelfMenu && byId(shelfMenu.current)?.crate && <ViewSwitch shelf={shelfMenu.current} />}
+      {shelfMenu && byId(shelfMenu.current)?.altView && (
+        <ViewSwitch shelf={shelfMenu.current} alt={byId(shelfMenu.current)!.altView!} />
+      )}
       <button
         className="iconbtn"
         onClick={onTheme}
@@ -39,8 +41,8 @@ export default function TopBar({
   )
 }
 
-/** Grid or crate, for a shelf that offers both. */
-function ViewSwitch({ shelf }: { shelf: string }) {
+/** Grid, or the shelf's browsing view — the crate or the bookshelf. */
+function ViewSwitch({ shelf, alt }: { shelf: string; alt: 'crate' | 'shelf' }) {
   const view = useView(shelf)
   return (
     <div className="viewswitch" role="group" aria-label="How to show this shelf">
@@ -60,15 +62,24 @@ function ViewSwitch({ shelf }: { shelf: string }) {
       </button>
       <button
         className="viewswitch__btn"
-        aria-pressed={view === 'crate'}
-        aria-label="Crate — one at a time"
-        title="Crate"
-        onClick={() => setView(shelf, 'crate')}
+        aria-pressed={view === alt}
+        aria-label={alt === 'crate' ? 'Crate — one at a time' : 'Bookshelf'}
+        title={alt === 'crate' ? 'Crate' : 'Bookshelf'}
+        onClick={() => setView(shelf, alt)}
       >
-        <svg viewBox="0 0 16 16" aria-hidden="true">
-          <path d="M4.5 1.5h7M3 4h10" />
-          <rect x="1.5" y="6.5" width="13" height="8" />
-        </svg>
+        {alt === 'crate' ? (
+          <svg viewBox="0 0 16 16" aria-hidden="true">
+            <path d="M4.5 1.5h7M3 4h10" />
+            <rect x="1.5" y="6.5" width="13" height="8" />
+          </svg>
+        ) : (
+          <svg viewBox="0 0 16 16" aria-hidden="true">
+            <path d="M1 14.5h14" />
+            <rect x="2.5" y="4" width="2.5" height="10.5" />
+            <rect x="5.5" y="2" width="3" height="12.5" />
+            <path d="M10 5.2l2.4-.6 2.3 9.4-2.4.6z" />
+          </svg>
+        )}
       </button>
     </div>
   )

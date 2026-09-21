@@ -119,6 +119,20 @@ wheel and the arrow keys do the same. Each device remembers which view you
 last used. Tabs and filters still apply: the crate holds whatever the grid
 would show.
 
+## The bookshelf view (Books)
+
+The Books page has the same switch at the top right: the grid, or the
+**bookshelf**. The bookshelf gives each kind its own shelf — Novels, Coffee
+Table, Graphic Novels, Cookbooks, in that order, and a last one for anything
+not given a kind yet. Each is a row of books standing on a plank: the one in
+the middle faces you, the others turn away to either side. Slide a row sideways
+with your thumb to walk along it; up and down still scrolls the page from one
+shelf to the next. Tap the middle book and its details and buy buttons come up
+under that shelf; tap any other book and it slides round to the middle. On a
+computer a sideways trackpad swipe slides the row. The filter tabs step aside
+in this view, since the shelves do their job. The shelf order lives in
+`shelfRows` in `src/categories.ts`.
+
 ## Adding from a link or a photo
 
 The top of every Add form says **Fill it in for me**: **Take picture** and

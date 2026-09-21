@@ -1,17 +1,20 @@
-// Which way a shelf is shown: the two-up grid, or the crate — one record at a
-// time, flicked through. Remembered per shelf on this device, and shared
-// between the top bar (which holds the switch) and the shelf (which obeys it).
+// Which way a shelf is shown: the two-up grid, or the shelf's own browsing
+// view — the crate for records, flicked through one at a time, or the
+// bookshelf for books, slid along row by row. Remembered per shelf on this
+// device, and shared between the top bar (which holds the switch) and the
+// shelf (which obeys it).
 
 import { useSyncExternalStore } from 'react'
 
-export type ShelfView = 'grid' | 'crate'
+export type ShelfView = 'grid' | 'crate' | 'shelf'
 
 const key = (shelf: string) => `shelf.view.${shelf}`
 const listeners = new Set<() => void>()
 
 export function getView(shelf: string): ShelfView {
   try {
-    return localStorage.getItem(key(shelf)) === 'crate' ? 'crate' : 'grid'
+    const saved = localStorage.getItem(key(shelf))
+    return saved === 'crate' || saved === 'shelf' ? saved : 'grid'
   } catch {
     return 'grid'
   }

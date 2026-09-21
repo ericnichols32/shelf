@@ -1713,77 +1713,100 @@ select {
   cursor: grab;
 }
 
-.crate__card {
-  width: 100%;
-  text-align: center;
-  color: #f4ece0;
+/* Light words over the dimmed sleeve. */
+.crate__panel .peek {
+  --peek-ink: #f4ece0;
+  --peek-soft: rgba(244, 236, 224, 0.72);
+  --peek-accent: #e8b79a;
+  --peek-line: rgba(244, 236, 224, 0.4);
 }
 
-.crate__panel-title {
+/* ---- an item's details, in place (Peek) --------------------------------- */
+
+.peek {
+  --peek-ink: var(--ink);
+  --peek-soft: var(--muted);
+  --peek-accent: var(--accent);
+  --peek-line: var(--sand-deep);
+  width: 100%;
+  text-align: center;
+  color: var(--peek-ink);
+}
+
+.peek__title {
   font-family: var(--display);
   font-size: 22px;
   line-height: 1.15;
   margin: 0;
 }
 
-.crate__panel-creator {
+.peek__creator {
   margin: 6px 0 0;
   font-size: 16px;
-  color: #e8b79a;
+  color: var(--peek-accent);
 }
 
-.crate__panel-facts {
+.peek__facts {
   margin: 10px 0 0;
-  color: rgba(244, 236, 224, 0.72);
+  color: var(--peek-soft);
 }
 
-.crate__panel-tag {
+.peek__tag {
   margin: 12px 0 0;
   display: flex;
   flex-direction: column;
   align-items: center;
   gap: 6px;
-  color: rgba(244, 236, 224, 0.72);
+  color: var(--peek-soft);
 }
 
-.crate__panel-tag .tagpill {
-  border-color: rgba(244, 236, 224, 0.4);
-  color: #f4ece0;
+.peek__tag .tagpill {
+  border-color: var(--peek-line);
+  color: var(--peek-ink);
 }
 
-.crate__panel-notes {
+.peek__notes {
   margin: 12px 0 0;
   font-size: 15px;
   line-height: 1.5;
-  /* However long the note is, the panel stays the size of the sleeve. The
-     whole of it is on the record's own page. */
+  /* However long the note is, the panel stays a sensible size. The whole of
+     it is on the item's own page. */
   display: -webkit-box;
   -webkit-box-orient: vertical;
   -webkit-line-clamp: 4;
   overflow: hidden;
-  color: rgba(244, 236, 224, 0.85);
+  color: var(--peek-soft);
 }
 
-.crate__panel-note {
+.peek__note {
   margin: 14px 0 0;
   font-size: 14px;
-  color: rgba(244, 236, 224, 0.72);
+  color: var(--peek-soft);
 }
 
-.buy.crate__buy {
+.buy.peek__buy {
   margin: 12px 0 0;
   padding: 14px 16px;
 }
 
-.crate__panel-links {
+.peek__second {
+  display: inline-block;
+  margin-top: 10px;
+  font-size: 14px;
+  color: var(--peek-soft);
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
+.peek__links {
   margin: 14px 0 0;
   display: flex;
   justify-content: center;
   gap: 18px;
 }
 
-.crate__panel-links .linkish {
-  color: rgba(244, 236, 224, 0.8);
+.peek__links .linkish {
+  color: var(--peek-soft);
   font-family: var(--label);
   font-size: 11px;
   letter-spacing: 0.14em;
@@ -1798,6 +1821,148 @@ select {
 
 @media (prefers-reduced-motion: reduce) {
   .crate__panel {
+    animation: none;
+  }
+}
+
+/* ------------------------------------------------------------------ *
+ * The bookshelf — a row per kind, slid along sideways
+ * ------------------------------------------------------------------ */
+
+.bookshelf {
+  --book: min(31vw, 150px);
+  display: flex;
+  flex-direction: column;
+  gap: 34px;
+  padding: 8px 0 110px;
+}
+
+.bookrow__label {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  margin: 0 0 10px;
+  color: var(--muted);
+}
+
+.bookrow__count {
+  color: var(--faint);
+}
+
+.bookrow__stage {
+  position: relative;
+  /* The tallest book, plus a little air above it. */
+  height: calc(var(--book) * 1.5 + 10px);
+  perspective: 900px;
+  perspective-origin: 50% 60%;
+  /* A stacking context of its own, like the crate: the books' layering stays
+     below the top bar's menu. */
+  z-index: 0;
+  /* Sideways is the row's; up and down stays the page's. */
+  touch-action: pan-y;
+  user-select: none;
+  -webkit-user-select: none;
+  cursor: grab;
+  overflow: hidden;
+  /* Books slide under the edges of the shelf rather than stopping dead. */
+  margin: 0 calc(-1 * var(--gutter));
+  -webkit-mask-image: linear-gradient(90deg, transparent, #000 7%, #000 93%, transparent);
+  mask-image: linear-gradient(90deg, transparent, #000 7%, #000 93%, transparent);
+}
+
+.bookrow__stage:active {
+  cursor: grabbing;
+}
+
+.bookrow__book {
+  position: absolute;
+  left: 50%;
+  bottom: 0;
+  width: var(--book);
+  transform-origin: center bottom;
+  will-change: transform;
+  box-shadow:
+    0 1px 2px rgba(20, 16, 12, 0.16),
+    0 8px 18px rgba(20, 16, 12, 0.18);
+  transition: filter 0.2s ease;
+}
+
+.bookrow__art {
+  position: relative;
+  width: 100%;
+  aspect-ratio: var(--ratio, 0.667);
+  overflow: hidden;
+  background: var(--sand);
+}
+
+.bookrow__art img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+  pointer-events: none;
+  -webkit-user-drag: none;
+}
+
+/* The blank, typographic cover is drawn for a full-size card; on a book this
+   small it wants smaller type. */
+.bookrow__art .card__blank {
+  padding: 10px;
+}
+
+.bookrow__art .card__blank-title {
+  font-size: 15px;
+}
+
+.bookrow__art .card__blank-creator {
+  font-size: 9px;
+}
+
+/* The shelf the books stand on. */
+.bookrow__plank {
+  position: relative;
+  z-index: 1;
+  height: 12px;
+  margin: 0 calc(-1 * var(--gutter));
+  background: linear-gradient(180deg, var(--sand-deep), var(--sand) 70%);
+  box-shadow:
+    0 1px 0 rgba(255, 255, 255, 0.25) inset,
+    0 8px 14px -6px rgba(20, 16, 12, 0.28);
+}
+
+.bookrow__caption {
+  text-align: center;
+  margin-top: 14px;
+  min-height: 52px;
+  animation: crate-in 0.25s ease;
+}
+
+.bookrow__title {
+  font-family: var(--display);
+  font-size: 19px;
+  line-height: 1.2;
+  margin: 0;
+}
+
+.bookrow__creator {
+  margin: 4px 0 0;
+  font-size: 15px;
+  color: var(--accent);
+}
+
+.bookrow__details {
+  margin-top: 16px;
+  padding: 18px 16px;
+  background: var(--raised);
+  border: 1px solid var(--sand);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow-card);
+  animation: crate-panel 0.18s ease;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .bookrow__caption,
+  .bookrow__details {
     animation: none;
   }
 }

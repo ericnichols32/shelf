@@ -60,8 +60,13 @@ export interface Category {
    * the item's page.
    */
   frameless?: boolean
-  /** Offers the crate view — one at a time, flicked through — beside the grid. */
-  crate?: boolean
+  /**
+   * A browsing view offered beside the grid: the crate (one record at a time,
+   * flicked through) or the bookshelf (a row per tag, slid along).
+   */
+  altView?: 'crate' | 'shelf'
+  /** The bookshelf's rows, top to bottom — tag values, in the order wanted. */
+  shelfRows?: string[]
   /** An extra single-choice field, for shelves that want one. */
   tagGroup?: {
     label: string
@@ -127,7 +132,7 @@ export const CATEGORIES: Category[] = [
     creatorHint: 'Fleetwood Mac',
     listOrder: 'creator-first',
     frameless: true,
-    crate: true,
+    altView: 'crate',
     detailLabel: 'Pressing',
     detailHint: '2021 reissue, clear',
     ratio: 1,
@@ -179,6 +184,8 @@ export const CATEGORIES: Category[] = [
     ratio: 2 / 3,
     cutFillsFrame: true,
     frameless: true,
+    altView: 'shelf',
+    shelfRows: ['Novel', 'Coffee table', 'Graphic Novel', 'Cookbook'],
     tagGroup: {
       label: 'Kind',
       options: ['Novel', 'Cookbook', 'Graphic Novel', 'Coffee table'],

@@ -1,10 +1,9 @@
 import { useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react'
-import { buyLinks, tagLabel, type Category } from '../categories'
-import { useCanEdit } from '../edit'
+import type { Category } from '../categories'
 import { formatPrice } from '../price'
-import { go } from '../route'
 import type { Item } from '../types'
 import Cover from './Cover'
+import Peek from './Peek'
 
 /**
  * Flicking through a crate of records.
@@ -265,7 +264,11 @@ export default function Crate({
             >
               <Cover item={item} category={category} className="crate__art" />
               {open && !moving && item.id === front.id && (
-                <Details item={item} category={category} onClose={shut} />
+                // The panel doesn't take the finger: a drag that starts on it
+                // still flicks the crate underneath.
+                <div className="crate__panel">
+                  <Peek item={item} category={category} onClose={shut} />
+                </div>
               )}
             </div>
           )
@@ -291,76 +294,6 @@ export default function Crate({
             {Math.round(pos) === 0 && <> &middot; pull down to flick</>}
           </p>
         )}
-      </div>
-    </div>
-  )
-}
-
-/**
- * A record's details, over its own sleeve.
- *
- * The crate is for flicking, and being thrown onto another page halfway
- * through breaks that. So everything the item's own page would say — what it
- * is, and where to buy it — comes up here instead, with the artwork dimmed
- * behind it so the words stay readable whatever the sleeve looks like.
- */
-function Details({
-  item,
-  category,
-  onClose,
-}: {
-  item: Item
-  category: Category
-  onClose: () => void
-}) {
-  const canEdit = useCanEdit()
-  const links = buyLinks(item)
-  const facts = [
-    item.year,
-    item.detail,
-    item.status === 'wants' && item.price ? formatPrice(item.price) : '',
-  ].filter(Boolean)
-
-  return (
-    // The panel doesn't take the finger: a drag that starts on it still
-    // flicks the crate underneath, so the details are no bar to carrying on.
-    <div className="crate__panel">
-      <div className="crate__card">
-        <h2 className="crate__panel-title">{item.title}</h2>
-        {item.creator && <p className="crate__panel-creator">{item.creator}</p>}
-        {facts.length > 0 && <p className="crate__panel-facts label">{facts.join(' · ')}</p>}
-        {item.tag && category.tagGroup && (
-          <p className="crate__panel-tag">
-            <span className="label">{tagLabel(category, item.status)}</span>
-            <span className="tagpill">{item.tag}</span>
-          </p>
-        )}
-        {item.notes && <p className="crate__panel-notes">{item.notes}</p>}
-
-        {/* Nothing to go and do about a record already on the shelf. */}
-        {item.status === 'wants' && links.primary.href && (
-          <>
-            {links.note && <p className="crate__panel-note">{links.note}</p>}
-            <a className="buy crate__buy" href={links.primary.href} target="_blank" rel="noreferrer">
-              <span>
-                {links.primary.label}
-                {item.price ? ` - ${formatPrice(item.price)}` : ''}
-              </span>
-              <span aria-hidden="true">&rarr;</span>
-            </a>
-          </>
-        )}
-
-        <p className="crate__panel-links">
-          {canEdit && (
-            <button className="linkish" onClick={() => go(`/i/${item.id}/edit`)}>
-              Edit
-            </button>
-          )}
-          <button className="linkish" onClick={onClose}>
-            Close
-          </button>
-        </p>
       </div>
     </div>
   )

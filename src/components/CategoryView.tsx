@@ -6,6 +6,7 @@ import type { Item, Status } from '../types'
 import ItemCard from './ItemCard'
 import ArrangeList from './ArrangeList'
 import Crate from './Crate'
+import Bookshelf from './Bookshelf'
 import { useView } from '../viewmode'
 
 export default function CategoryView({
@@ -28,7 +29,10 @@ export default function CategoryView({
   /** Which tag the feed is narrowed to, or null for all of them. */
   const canEdit = useCanEdit()
   const view = useView(category.id)
-  const crate = Boolean(category.crate) && view === 'crate'
+  const crate = category.altView === 'crate' && view === 'crate'
+  /** The bookshelf lays a row out per tag, so it stands in for the filters. */
+  const bookshelf = category.altView === 'shelf' && view === 'shelf'
+  const alt = crate || bookshelf
   const [tag, setTag] = useState<string | null>(null)
   /** Arranging the list by hand. Only ever offered to whoever may edit. */
   const [arranging, setArranging] = useState(false)
@@ -104,6 +108,7 @@ export default function CategoryView({
             tag — a lone "All" filters nothing. */}
         {filterOptions.length > 0 &&
         !arranging &&
+        !bookshelf &&
         onThisSide.some((i) => keyOf(i)) ? (
           <nav className="filters" aria-label={`Filter by ${filterLabel}`}>
             {[null, ...filterOptions].map((option) => {
@@ -134,7 +139,7 @@ export default function CategoryView({
           <span />
         )}
 
-        {canEdit && onThisSide.length > 1 && !crate && (
+        {canEdit && onThisSide.length > 1 && !alt && (
           <button
             className="btn btn--quiet arrange"
             aria-pressed={arranging}
@@ -153,6 +158,8 @@ export default function CategoryView({
 
       {arranging ? (
         <ArrangeList items={onThisSide} onReorder={onReorder} />
+      ) : onThisSide.length > 0 && bookshelf ? (
+        <Bookshelf category={category} items={onThisSide} />
       ) : shown.length > 0 && crate ? (
         // A different list — another side, another filter — starts again
         // at the front of the crate.
@@ -175,7 +182,7 @@ export default function CategoryView({
 
       {/* In the crate the caption sits in the middle of the screen's foot,
           where a centred plus would land on top of it. */}
-      <div className={`dock ${crate ? 'dock--aside' : ''}`}>
+      <div className={`dock ${alt ? 'dock--aside' : ''}`}>
         {canEdit && (
           <button
             className="addbtn"
