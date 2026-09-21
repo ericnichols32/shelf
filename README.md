@@ -124,8 +124,12 @@ would show.
 The Books page has the same switch at the top right: the grid, or the
 **bookshelf**. The bookshelf gives each kind its own row — Novels, Coffee Table,
 Graphic Novels, Cookbooks, in that order, and a last one for anything not given
-a kind yet. Every cover is flat, the same size and evenly spaced, with its title
-and author underneath, the way Apple Books lays out a shelf. Each row scrolls
+a kind yet. Every cover is flat and evenly spaced, with its title and author
+underneath, the way Apple Books lays out a shelf. Covers all share one height
+and keep their own shape, so nothing is cropped — and a shop photo that shows
+the book on a white page has that white trimmed off automatically, so the book
+itself is what fills the height. (A cover whose own design is white is spotted
+and left alone: the trim only happens when what's left is a solid rectangle.) Each row scrolls
 sideways with the phone's own swipe, the next cover peeking in from the edge;
 up and down moves between rows. Tap a cover and its details and buy buttons
 come up under that row; tap it again, or Close, to put them away. The filter

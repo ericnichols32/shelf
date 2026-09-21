@@ -214,3 +214,123 @@ export async function cutOutBackground(
   cache.set(key, result)
   return result
 }
+
+/**
+ * A book's cover with any white margin around it taken away — for the
+ * bookshelf, which shows every cover at the same height and its own shape.
+ *
+ * Shop pictures often show the book on a white page: the book in the middle,
+ * white round it. That white is found by flooding in from the edges, and the
+ * picture is cropped to what's left — but only when what's left is plainly a
+ * book, a solid rectangle. A cover whose own design is white runs its white to
+ * the edge, the flood gets into it, and what remains is a ragged shape rather
+ * than a rectangle; that one is left exactly as it was. A book photographed at
+ * an angle comes out as a solid shape that isn't quite a rectangle, and gets
+ * its white made see-through instead of cropped. Anything that can't be read
+ * comes back unchanged.
+ */
+const framed = new Map<string, Promise<string>>()
+
+export function framedCover(url: string): Promise<string> {
+  if (!url) return Promise.resolve(url)
+  let job = framed.get(url)
+  if (!job) {
+    job = frame(url).catch(() => url)
+    framed.set(url, job)
+  }
+  return job
+}
+
+async function frame(url: string): Promise<string> {
+  const img = await loadReadable(url)
+  const scale = Math.min(1, 700 / Math.max(img.naturalWidth, img.naturalHeight))
+  const w = Math.max(1, Math.round(img.naturalWidth * scale))
+  const h = Math.max(1, Math.round(img.naturalHeight * scale))
+  const canvas = document.createElement('canvas')
+  canvas.width = w
+  canvas.height = h
+  const ctx = canvas.getContext('2d', { willReadFrequently: true })!
+  ctx.drawImage(img, 0, 0, w, h)
+  const data = ctx.getImageData(0, 0, w, h)
+  const px = data.data
+
+  const floor = 255 - TOLERANCE
+  const white = (p: number) =>
+    px[p * 4 + 3] < 16 || (px[p * 4] >= floor && px[p * 4 + 1] >= floor && px[p * 4 + 2] >= floor)
+
+  // Is there a margin at all? Most of the rim has to be white.
+  let rimWhite = 0
+  let rim = 0
+  for (let x = 0; x < w; x++) {
+    rim += 2
+    if (white(x)) rimWhite++
+    if (white((h - 1) * w + x)) rimWhite++
+  }
+  for (let y = 1; y < h - 1; y++) {
+    rim += 2
+    if (white(y * w)) rimWhite++
+    if (white(y * w + w - 1)) rimWhite++
+  }
+  if (rimWhite < rim * 0.5) return url
+
+  // Flood the white in from the edges.
+  const out = new Uint8Array(w * h)
+  const stack: number[] = []
+  for (let x = 0; x < w; x++) stack.push(x, (h - 1) * w + x)
+  for (let y = 0; y < h; y++) stack.push(y * w, y * w + w - 1)
+  while (stack.length) {
+    const p = stack.pop()!
+    if (out[p] || !white(p)) continue
+    out[p] = 1
+    const x = p % w
+    if (x > 0) stack.push(p - 1)
+    if (x < w - 1) stack.push(p + 1)
+    if (p >= w) stack.push(p - w)
+    if (p < w * (h - 1)) stack.push(p + w)
+  }
+
+  let top = h
+  let left = w
+  let right = -1
+  let bottom = -1
+  let solid = 0
+  for (let y = 0; y < h; y++) {
+    for (let x = 0; x < w; x++) {
+      if (out[y * w + x]) continue
+      solid++
+      if (y < top) top = y
+      if (y > bottom) bottom = y
+      if (x < left) left = x
+      if (x > right) right = x
+    }
+  }
+  if (right < left) return url
+  const bw = right - left + 1
+  const bh = bottom - top + 1
+  // No real margin to take away.
+  if (bw >= w * 0.98 && bh >= h * 0.98) return url
+  const fill = solid / (bw * bh)
+
+  const cut = document.createElement('canvas')
+  const sx = img.naturalWidth / w
+  const sy = img.naturalHeight / h
+  cut.width = Math.round(bw * sx)
+  cut.height = Math.round(bh * sy)
+  const cctx = cut.getContext('2d')!
+
+  if (fill >= 0.9) {
+    // A clean rectangle: crop the original to it, keeping every pixel of the
+    // cover itself, white parts included.
+    cctx.drawImage(img, left * sx, top * sy, bw * sx, bh * sy, 0, 0, cut.width, cut.height)
+    return cut.toDataURL('image/jpeg', 0.9)
+  }
+  if (fill >= 0.6) {
+    // A solid shape that isn't square to the picture — a book at an angle.
+    for (let p = 0; p < w * h; p++) if (out[p]) px[p * 4 + 3] = 0
+    ctx.putImageData(data, 0, 0)
+    cctx.drawImage(canvas, left, top, bw, bh, 0, 0, cut.width, cut.height)
+    return cut.toDataURL('image/png')
+  }
+  // Ragged: the white was the cover's own. Leave it be.
+  return url
+}

@@ -1830,7 +1830,8 @@ select {
  * ------------------------------------------------------------------ */
 
 .bookshelf {
-  --book: min(30vw, 140px);
+  /* The height every cover shares; each keeps its own width. */
+  --book: min(45vw, 210px);
   display: flex;
   flex-direction: column;
   gap: 30px;
@@ -1851,7 +1852,8 @@ select {
 
 .case__rail {
   display: flex;
-  gap: 14px;
+  align-items: flex-start;
+  gap: 16px;
   /* Runs to the screen's edges, so the next cover peeks in from the side. */
   margin: 0 calc(-1 * var(--gutter));
   padding: 0 var(--gutter) 4px;
@@ -1868,7 +1870,6 @@ select {
 
 .case__book {
   flex: none;
-  width: var(--book);
   display: flex;
   flex-direction: column;
   align-items: flex-start;
@@ -1878,42 +1879,44 @@ select {
 }
 
 .case__cover {
-  position: relative;
-  width: 100%;
-  aspect-ratio: 2 / 3 !important;
-  overflow: hidden;
+  display: block;
+  height: var(--book);
+  width: auto;
+  /* A very wide or very narrow book still shouldn't dominate or vanish. */
+  min-width: calc(var(--book) * 0.45);
+  max-width: calc(var(--book) * 1.2);
+  object-fit: contain;
   box-shadow:
     0 1px 2px rgba(20, 16, 12, 0.16),
     0 6px 14px rgba(20, 16, 12, 0.14);
   transition: filter 0.2s ease;
+  -webkit-user-drag: none;
 }
 
-.case__cover:has(.card__blank) {
+.case__cover--blank {
+  width: calc(var(--book) * 2 / 3);
+  display: flex;
+  align-items: flex-end;
+  padding: 10px;
   background: var(--sand);
 }
 
-.case__cover img {
-  width: 100%;
-  height: 100%;
-  object-fit: cover !important;
-  display: block;
-}
-
-.case__cover .card__blank {
-  padding: 10px;
-}
-
-.case__cover .card__blank-title {
+.case__blank-title {
+  font-family: var(--display);
   font-size: 15px;
-}
-
-.case__cover .card__blank-creator {
-  font-size: 9px;
+  line-height: 1.15;
 }
 
 /* The book whose details are open, dimmed a little like the record's. */
 .case__book[data-open] .case__cover {
   filter: brightness(0.7);
+}
+
+.case__title,
+.case__creator {
+  /* As wide as the cover above, whatever its shape, and no wider. */
+  width: 0;
+  min-width: 100%;
 }
 
 .case__title {

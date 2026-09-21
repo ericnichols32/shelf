@@ -1,14 +1,16 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { tagTabLabel, type Category } from '../categories'
 import type { Item } from '../types'
-import Cover from './Cover'
+import { framedCover } from '../cutout'
 import Peek from './Peek'
 
 /**
  * Books in rows, a row for each kind.
  *
- * Every cover flat, the same size and evenly spaced, with its title and
- * author under it — the way Apple Books lays out a shelf. Each row scrolls
+ * Every cover flat, evenly spaced, with its title and author under it — the
+ * way Apple Books lays out a shelf. Covers share a height and keep their own
+ * shape, so nothing is cropped, and any white margin a shop's photo left
+ * round a book is trimmed away first. Each row scrolls
  * sideways with the phone's own swipe and momentum, the next cover peeking in
  * from the edge to say there's more; up and down moves between rows. Tap a
  * cover and its details, with the buy button, come up under that row.
@@ -70,7 +72,7 @@ function Shelf({
             data-open={item.id === openId || undefined}
             onClick={() => setOpenId((id) => (id === item.id ? null : item.id))}
           >
-            <Cover item={item} category={category} className="case__cover" tight />
+            <BookCover item={item} />
             <span className="case__title">{item.title}</span>
             {item.creator && <span className="case__creator">{item.creator}</span>}
           </button>
@@ -83,5 +85,41 @@ function Shelf({
         </div>
       )}
     </section>
+  )
+}
+
+/**
+ * A cover at the shelf's height and its own width, with any white margin
+ * taken off (see framedCover). The plain picture shows first and the trimmed
+ * one replaces it when ready, usually a moment later.
+ */
+function BookCover({ item }: { item: Item }) {
+  const [src, setSrc] = useState(item.cover)
+  const [broken, setBroken] = useState(false)
+
+  useEffect(() => {
+    let live = true
+    framedCover(item.cover).then((framed) => live && setSrc(framed))
+    return () => {
+      live = false
+    }
+  }, [item.cover])
+
+  if (!item.cover || broken) {
+    return (
+      <span className="case__cover case__cover--blank">
+        <span className="case__blank-title">{item.title}</span>
+      </span>
+    )
+  }
+  return (
+    <img
+      className="case__cover"
+      src={src}
+      alt={item.title}
+      loading="lazy"
+      draggable={false}
+      onError={() => (src !== item.cover ? setSrc(item.cover) : setBroken(true))}
+    />
   )
 }
