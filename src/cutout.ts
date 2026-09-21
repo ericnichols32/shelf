@@ -182,7 +182,7 @@ const proxied = (url: string) =>
   `https://wsrv.nl/?url=${encodeURIComponent(url)}&w=1200&h=1200&fit=inside&we`
 
 /** The picture with its pixels readable: directly if the host allows, else proxied. */
-export async function loadReadable(url: string): Promise<HTMLImageElement> {
+async function loadReadable(url: string): Promise<HTMLImageElement> {
   try {
     return await load(url)
   } catch {

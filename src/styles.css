@@ -1826,12 +1826,11 @@ select {
 }
 
 /* ------------------------------------------------------------------ *
- * The bookshelf — spines out, one book face-out per shelf
+ * The bookshelf — a row of flat covers for each kind
  * ------------------------------------------------------------------ */
 
 .bookshelf {
-  /* The shelf's height; spines stand up to it, the face-out book fills it. */
-  --shelf: min(46vw, 210px);
+  --book: min(30vw, 140px);
   display: flex;
   flex-direction: column;
   gap: 30px;
@@ -1852,94 +1851,41 @@ select {
 
 .case__rail {
   display: flex;
-  align-items: flex-end;
-  gap: 3px;
-  height: var(--shelf);
-  /* Runs to the screen's edges, so books slide off the side like a real
-     shelf going on out of view. */
+  gap: 14px;
+  /* Runs to the screen's edges, so the next cover peeks in from the side. */
   margin: 0 calc(-1 * var(--gutter));
-  padding: 0 var(--gutter);
+  padding: 0 var(--gutter) 4px;
+  scroll-padding: 0 var(--gutter);
   overflow-x: auto;
-  overflow-y: hidden;
+  scroll-snap-type: x mandatory;
   scrollbar-width: none;
   overscroll-behavior-x: contain;
-  /* The shelf itself: a hairline the books stand on. */
-  border-bottom: 1px solid var(--sand-deep);
 }
 
 .case__rail::-webkit-scrollbar {
   display: none;
 }
 
-/* A little room after the last book, so it doesn't sit hard on the edge. */
-.case__rail::after {
-  content: '';
+.case__book {
   flex: none;
-  width: 1px;
-}
-
-.spine {
-  flex: none;
-  width: var(--w);
-  height: calc(var(--shelf) * var(--h));
+  width: var(--book);
   display: flex;
+  flex-direction: column;
   align-items: flex-start;
-  justify-content: center;
-  padding: 12px 0;
-  background: var(--spine-paper, var(--sand));
-  color: var(--spine-ink, var(--muted));
-  border-radius: 2px 2px 1px 1px;
-  /* The roundness of a real spine: light on one edge, shade on the other,
-     and the printed bands near the top and bottom. */
-  box-shadow:
-    inset 2px 0 0 rgba(255, 255, 255, 0.12),
-    inset -3px 0 0 rgba(0, 0, 0, 0.14),
-    inset 0 9px 0 -7px rgba(0, 0, 0, 0.18),
-    inset 0 -9px 0 -7px rgba(0, 0, 0, 0.18);
+  text-align: left;
+  scroll-snap-align: start;
   cursor: pointer;
-  transition: transform 0.15s ease, background-color 0.3s ease;
-}
-
-.spine:hover,
-.spine:focus-visible {
-  transform: translateY(-4px);
-}
-
-.spine--waiting {
-  background: var(--sand);
-  color: var(--muted);
-}
-
-.spine__title {
-  /* Top to bottom, the way spines are printed in America. */
-  writing-mode: vertical-rl;
-  font-family: var(--display);
-  font-size: 12px;
-  line-height: 1;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  max-height: 100%;
-}
-
-.case__face {
-  flex: none;
-  height: var(--shelf);
-  width: calc(var(--shelf) * 2 / 3);
-  margin: 0 5px;
-  padding: 0;
-  box-shadow:
-    0 1px 2px rgba(20, 16, 12, 0.18),
-    0 6px 16px rgba(20, 16, 12, 0.18);
-  cursor: pointer;
-  animation: shelf-turn 0.35s ease;
 }
 
 .case__cover {
   position: relative;
   width: 100%;
-  height: 100%;
+  aspect-ratio: 2 / 3 !important;
   overflow: hidden;
+  box-shadow:
+    0 1px 2px rgba(20, 16, 12, 0.16),
+    0 6px 14px rgba(20, 16, 12, 0.14);
+  transition: filter 0.2s ease;
 }
 
 .case__cover:has(.card__blank) {
@@ -1954,38 +1900,42 @@ select {
 }
 
 .case__cover .card__blank {
-  padding: 12px;
+  padding: 10px;
 }
 
 .case__cover .card__blank-title {
-  font-size: 17px;
+  font-size: 15px;
 }
 
-/* A book turning round to face you: it grows out from its spine. */
-@keyframes shelf-turn {
-  from {
-    transform: perspective(600px) rotateY(-70deg);
-    opacity: 0.4;
-  }
+.case__cover .card__blank-creator {
+  font-size: 9px;
 }
 
-.case__caption {
-  margin-top: 12px;
-  min-height: 46px;
-  animation: crate-in 0.25s ease;
+/* The book whose details are open, dimmed a little like the record's. */
+.case__book[data-open] .case__cover {
+  filter: brightness(0.7);
 }
 
 .case__title {
+  margin-top: 8px;
   font-family: var(--display);
-  font-size: 18px;
-  line-height: 1.2;
-  margin: 0;
+  font-size: 14px;
+  line-height: 1.25;
+  /* Two lines at most; the full title is in the details. */
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  overflow: hidden;
 }
 
 .case__creator {
-  margin: 3px 0 0;
-  font-size: 15px;
-  color: var(--accent);
+  margin-top: 2px;
+  font-size: 13px;
+  color: var(--muted);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 100%;
 }
 
 .case__details {
@@ -1999,8 +1949,6 @@ select {
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .case__face,
-  .case__caption,
   .case__details {
     animation: none;
   }
