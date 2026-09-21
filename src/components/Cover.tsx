@@ -17,10 +17,16 @@ export default function Cover({
   item,
   category,
   className,
+  tight = false,
 }: {
   item: Pick<Item, 'cover' | 'title' | 'creator' | 'cutout'>
   category: Category
   className: string
+  /**
+   * Crop a cut-out to the object alone, for a view that frames every cover
+   * the same size itself (the bookshelf), rather than standing it in a tile.
+   */
+  tight?: boolean
 }) {
   const [broken, setBroken] = useState(false)
   const [shown, setShown] = useState(false)
@@ -44,7 +50,7 @@ export default function Cover({
     setRefused(false)
     if (!item.cutout || !item.cover || !shown) return
     let live = true
-    cutOutBackground(item.cover, cutRatio(category), cutFill(category)).then((result) => {
+    cutOutBackground(item.cover, tight ? 0 : cutRatio(category), tight ? 1 : cutFill(category)).then((result) => {
       if (!live) return
       if (result.ok) setCut(result.url)
       else setRefused(true)
@@ -52,7 +58,7 @@ export default function Cover({
     return () => {
       live = false
     }
-  }, [item.cutout, item.cover, shown, category])
+  }, [item.cutout, item.cover, shown, category, tight])
 
   const cutMode = item.cutout && !broken && item.cover
 

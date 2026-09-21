@@ -1890,15 +1890,20 @@ select {
 .bookrow__art {
   position: relative;
   width: 100%;
-  aspect-ratio: var(--ratio, 0.667);
+  /* Every book the same frame, whatever shape its picture. */
+  aspect-ratio: 2 / 3 !important;
   overflow: hidden;
+}
+
+/* Only a book with no picture keeps the sand card behind its title. */
+.bookrow__art:has(.card__blank) {
   background: var(--sand);
 }
 
 .bookrow__art img {
   width: 100%;
   height: 100%;
-  object-fit: cover;
+  object-fit: cover !important;
   display: block;
   pointer-events: none;
   -webkit-user-drag: none;

@@ -52,6 +52,10 @@ export default function Bookshelf({
 
 /** How many books show to either side of the middle one. */
 const SIDE = 5
+/** Clear space between neighbouring books, in px. */
+const GAP = 16
+/** How far apart the books beyond the first neighbour stand, per book width. */
+const STEP = 0.86
 
 function ShelfRow({
   label,
@@ -118,7 +122,7 @@ function ShelfRow({
   )
 
   /** A drag this far sideways moves one book along. */
-  const stepPx = width * 0.55
+  const stepPx = width * 0.85
 
   // ---- dragging --------------------------------------------------------------
 
@@ -248,11 +252,12 @@ function ShelfRow({
           const sign = Math.sign(d)
           const near = Math.min(a, 1)
           const far = Math.max(a - 1, 0)
-          // Out from the middle: a big step to clear the book facing you, then
-          // closer together, the way books turned side-on stand.
-          const x = sign * (near * width * 0.74 + far * width * 0.3)
-          const turn = sign * near * 56
-          const back = -(near * 110 + far * 18)
+          // Out from the middle with a clear gap between each book: a full
+          // step to clear the one facing you, then a little closer, each
+          // turned a little further away and set a little further back.
+          const x = sign * (near * (width + GAP) + far * (width * STEP + GAP))
+          const turn = sign * Math.min(58, near * 18 + far * 13)
+          const back = -(near * 40 + far * 36)
           const isFront = i === middle
           return (
             <div
@@ -272,7 +277,7 @@ function ShelfRow({
                 opacity: Math.max(0, Math.min(1, SIDE + 1 - a)),
               }}
             >
-              <Cover item={item} category={category} className="bookrow__art" />
+              <Cover item={item} category={category} className="bookrow__art" tight />
             </div>
           )
         })}

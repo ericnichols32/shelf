@@ -126,6 +126,16 @@ function trim(
   const cutW = right - left + 1
   const cutH = bottom - top + 1
 
+  // Ratio 0 asks for the object alone, cropped tight, with no tile around it
+  // — for a place that sizes every cover to the same frame itself.
+  if (ratio <= 0) {
+    const tight = document.createElement('canvas')
+    tight.width = cutW
+    tight.height = cutH
+    tight.getContext('2d')!.drawImage(canvas, left, top, cutW, cutH, 0, 0, cutW, cutH)
+    return tight.toDataURL('image/png')
+  }
+
   // Re-mount the object on a canvas the same shape as the tile it will sit in,
   // sized so that its HEIGHT is what matches from one item to the next.
   //
