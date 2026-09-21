@@ -1194,6 +1194,41 @@ select {
   margin-left: auto;
 }
 
+.detail__stage {
+  position: relative;
+}
+
+/* The side arrows are for wide screens only; a phone keeps them up top,
+   where a thumb reaches and there is no room beside the picture. */
+.detail__side {
+  display: none;
+}
+
+@media (min-width: 820px) and (hover: hover) {
+  .stepper .stepper__arrow {
+    display: none;
+  }
+
+  .detail__side {
+    display: grid;
+    position: absolute;
+    top: 50%;
+    width: 46px;
+    height: 46px;
+    font-size: 18px;
+    transform: translateY(-50%);
+    background: var(--paper);
+  }
+
+  .detail__side--prev {
+    left: -74px;
+  }
+
+  .detail__side--next {
+    right: -74px;
+  }
+}
+
 /* ---- arranging a list --------------------------------------------------- */
 
 /* The shelf's controls: filters at one end, Arrange at the other. */

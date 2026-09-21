@@ -57,7 +57,31 @@ export default function ItemDetail({
         </nav>
       )}
 
-      <Cover item={item} category={category} className="detail__art" />
+      {/* On a wide screen the arrows sit either side of the picture instead,
+          where the eye already is. The row above keeps the count. */}
+      <div className="detail__stage">
+        {(previous || next) && (
+          <button
+            className="stepper__arrow detail__side detail__side--prev"
+            disabled={!previous}
+            aria-label="Previous"
+            onClick={() => previous && go(`/i/${previous.id}`)}
+          >
+            &larr;
+          </button>
+        )}
+        <Cover item={item} category={category} className="detail__art" />
+        {(previous || next) && (
+          <button
+            className="stepper__arrow detail__side detail__side--next"
+            disabled={!next}
+            aria-label="Next"
+            onClick={() => next && go(`/i/${next.id}`)}
+          >
+            &rarr;
+          </button>
+        )}
+      </div>
 
       <h1 className="detail__title">{item.title}</h1>
       <div className="detail__facts">
