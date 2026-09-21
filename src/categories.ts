@@ -56,7 +56,8 @@ export interface Category {
   cutFillsFrame?: boolean
   /**
    * Feed cards show the artwork edge to edge, with no white mount around it —
-   * a record sleeve is the object itself, the way it is on the item's page.
+   * a record sleeve or a book jacket is the object itself, the way it is on
+   * the item's page.
    */
   frameless?: boolean
   /** Offers the crate view — one at a time, flicked through — beside the grid. */
@@ -177,6 +178,7 @@ export const CATEGORIES: Category[] = [
     detailHint: 'Hardcover, 1st',
     ratio: 2 / 3,
     cutFillsFrame: true,
+    frameless: true,
     tagGroup: {
       label: 'Kind',
       options: ['Novel', 'Cookbook', 'Graphic Novel', 'Coffee table'],
