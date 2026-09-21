@@ -352,13 +352,25 @@ function QuickFill({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [link])
 
-  /** Paste link: straight from the clipboard where the browser allows it. */
+  /**
+   * Paste link.
+   *
+   * On a phone it reads the clipboard, which makes iOS show its own Paste
+   * bubble first — that bubble can't be skipped, but tapping it *is* the
+   * paste, so it's still the shortest way. A computer's browser may read the
+   * clipboard without asking at all, and then a link copied hours ago gets
+   * read before you've done anything; there, the button just opens the box
+   * and Cmd+V does the rest.
+   */
   const onPasteLink = async () => {
-    try {
-      const text = (await navigator.clipboard?.readText?.())?.trim() ?? ''
-      if (looksLikeUrl(text)) return readLink(asUrl(text))
-    } catch {
-      // Not allowed, or nothing there — the box below takes it instead.
+    const phone = window.matchMedia?.('(pointer: coarse)').matches
+    if (phone) {
+      try {
+        const text = (await navigator.clipboard?.readText?.())?.trim() ?? ''
+        if (looksLikeUrl(text)) return readLink(asUrl(text))
+      } catch {
+        // Declined, or nothing there — the box takes it instead.
+      }
     }
     setStatus(null)
     setStage('link')
