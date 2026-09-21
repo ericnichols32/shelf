@@ -7,8 +7,8 @@ import Peek from './Peek'
 /**
  * Books on shelves: a row for each kind, slid along sideways.
  *
- * Each row stands its books on a plank. The one in the middle faces you; the
- * rest turn away to either side, the further out the more, the way a row of
+ * Each row is a line of books. The one in the middle faces you; the rest
+ * turn away to either side, the further out the more, the way a row of
  * books looks when you walk along it. Slide a row with your thumb and the
  * next book comes round to face you. Up and down stays the page's — that is
  * how you get from one shelf to the next.
@@ -282,7 +282,6 @@ function ShelfRow({
           )
         })}
       </div>
-      <div className="bookrow__plank" aria-hidden="true" />
 
       {open && !moving ? (
         <div className="bookrow__details">

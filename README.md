@@ -124,7 +124,7 @@ would show.
 The Books page has the same switch at the top right: the grid, or the
 **bookshelf**. The bookshelf gives each kind its own shelf — Novels, Coffee
 Table, Graphic Novels, Cookbooks, in that order, and a last one for anything
-not given a kind yet. Each is a row of books standing on a plank: the one in
+not given a kind yet. Each is a row of books: the one in
 the middle faces you, the others turn away to either side. Slide a row sideways
 with your thumb to walk along it; up and down still scrolls the page from one
 shelf to the next. Tap the middle book and its details and buy buttons come up
