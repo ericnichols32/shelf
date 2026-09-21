@@ -121,13 +121,12 @@ would show.
 
 ## Adding from a link or a photo
 
-The top of every Add form says **Fill it in for me**, with three choices:
-**Take picture**, **Upload picture** and **Paste link**.
+The top of every Add form says **Fill it in for me**: **Take picture** and
+**Upload picture** side by side, and under them a box that says *Paste a link*.
 
-**Paste link.** Any shop's product page — Rough Trade, Gruv, McNally Jackson,
-LEGO, Nintendo, anywhere. Where the browser allows it the link comes straight
-off the clipboard; otherwise a box opens to paste it into. (Pasting a link into
-Title does the same.) The page is read and the form fills in: the title, the
+**Paste a link** into that box — any shop's product page: Rough Trade, Gruv,
+McNally Jackson, LEGO, Nintendo, anywhere. It's read the moment it lands; there's
+no button to press. (Pasting a link into Title does the same.) The page is read and the form fills in: the title, the
 artist / director / author / theme / publisher, the year, the cover, and the
 link itself, which becomes the buy button. What's left is the tag.
 

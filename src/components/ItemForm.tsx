@@ -267,13 +267,13 @@ export default function ItemForm({
 /**
  * Filling the form in from a photo or a link.
  *
- * Three ways in, side by side: take a photo, pick one from the library, or
- * paste a link. After a photo comes the one question it can't answer — which
+ * Three ways in: take a photo, pick one from the library, or paste a link
+ * into the box underneath — no button for that, the box reads it as it lands. After a photo comes the one question it can't answer — which
  * shop you saw it in — asked while the photo is already being read, so the
  * answer is usually waiting by the time you've typed it. (A link pasted
  * straight into Title still works too.)
  */
-type Stage = 'choose' | 'link' | 'shop' | 'working'
+type Stage = 'choose' | 'shop' | 'working'
 
 function QuickFill({
   category,
@@ -352,30 +352,6 @@ function QuickFill({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [link])
 
-  /**
-   * Paste link.
-   *
-   * On a phone it reads the clipboard, which makes iOS show its own Paste
-   * bubble first — that bubble can't be skipped, but tapping it *is* the
-   * paste, so it's still the shortest way. A computer's browser may read the
-   * clipboard without asking at all, and then a link copied hours ago gets
-   * read before you've done anything; there, the button just opens the box
-   * and Cmd+V does the rest.
-   */
-  const onPasteLink = async () => {
-    const phone = window.matchMedia?.('(pointer: coarse)').matches
-    if (phone) {
-      try {
-        const text = (await navigator.clipboard?.readText?.())?.trim() ?? ''
-        if (looksLikeUrl(text)) return readLink(asUrl(text))
-      } catch {
-        // Declined, or nothing there — the box takes it instead.
-      }
-    }
-    setStatus(null)
-    setStage('link')
-  }
-
   const onPhoto = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0]
     e.target.value = ''
@@ -445,42 +421,28 @@ function QuickFill({
             </svg>
             Upload picture
           </button>
-          <button type="button" className="quick__option" onClick={onPasteLink}>
-            <svg viewBox="0 0 24 24" aria-hidden="true">
-              <path d="M10 14a4 4 0 0 0 5.7 0l3-3a4 4 0 0 0-5.7-5.7l-1 1" />
-              <path d="M14 10a4 4 0 0 0-5.7 0l-3 3a4 4 0 0 0 5.7 5.7l1-1" />
-            </svg>
-            Paste link
-          </button>
         </div>
       )}
 
-      {stage === 'link' && (
-        <div className="quick__step">
-          <label className="quick__field">
-            <span className="label">Link</span>
-            <input
-              value={pasted}
-              onChange={(e) => {
-                setPasted(e.target.value)
-                if (looksLikeUrl(e.target.value)) readLink(asUrl(e.target.value))
-              }}
-              onKeyDown={(e) => {
-                if (e.key === 'Enter') {
-                  e.preventDefault()
-                  if (looksLikeUrl(pasted)) readLink(asUrl(pasted))
-                }
-              }}
-              placeholder="Paste a shop’s link here"
-              inputMode="url"
-              autoComplete="off"
-              autoFocus
-            />
-          </label>
-          <button type="button" className="linkish quick__back" onClick={startOver}>
-            Back
-          </button>
-        </div>
+      {stage === 'choose' && (
+        <input
+          className="quick__link"
+          value={pasted}
+          onChange={(e) => {
+            setPasted(e.target.value)
+            if (looksLikeUrl(e.target.value)) readLink(asUrl(e.target.value))
+          }}
+          onKeyDown={(e) => {
+            if (e.key === 'Enter') {
+              e.preventDefault()
+              if (looksLikeUrl(pasted)) readLink(asUrl(pasted))
+            }
+          }}
+          placeholder="Paste a link"
+          aria-label="Paste a link"
+          inputMode="url"
+          autoComplete="off"
+        />
       )}
 
       {stage === 'shop' && (
@@ -511,7 +473,7 @@ function QuickFill({
         </div>
       )}
 
-      {(photo || status) && stage !== 'choose' && stage !== 'link' ? (
+      {(photo || status) && stage !== 'choose' ? (
         <div className="quick__result">
           {photo && <img className="quick__photo" src={photo} alt="" />}
           {status && (

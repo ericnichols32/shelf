@@ -1409,7 +1409,7 @@ select {
 
 .quick__options {
   display: grid;
-  grid-template-columns: repeat(3, 1fr);
+  grid-template-columns: repeat(2, 1fr);
   gap: 8px;
 }
 
@@ -1445,6 +1445,27 @@ select {
   stroke-width: 1.4;
   stroke-linejoin: round;
   stroke-linecap: round;
+}
+
+.quick__link {
+  width: 100%;
+  color: var(--ink);
+  background: var(--paper);
+  border: 1px solid var(--sand);
+  border-radius: var(--radius);
+  padding: 13px 14px;
+  font-family: var(--body);
+  font-size: 17px;
+  outline: none;
+  transition: border-color 0.15s ease;
+}
+
+.quick__link::placeholder {
+  color: var(--faint);
+}
+
+.quick__link:focus {
+  border-color: var(--accent);
 }
 
 .quick__step {
