@@ -1198,26 +1198,47 @@ select {
   position: relative;
 }
 
-/* The side arrows are for wide screens only; a phone keeps them up top,
-   where a thumb reaches and there is no room beside the picture. */
-.detail__side {
+/* The arrows sit either side of the picture, where the eye already is; the
+   row above keeps only the count. On a phone there's no room beside the
+   picture, so they overlap its edges a little instead. */
+.stepper .stepper__arrow {
   display: none;
 }
 
-@media (min-width: 820px) and (hover: hover) {
-  .stepper .stepper__arrow {
-    display: none;
-  }
+.detail__side {
+  position: absolute;
+  z-index: 1;
+  top: 50%;
+  width: 42px;
+  height: 42px;
+  font-size: 17px;
+  transform: translateY(-50%);
+  background: var(--paper);
+  box-shadow: var(--shadow-card);
+}
 
+.detail__side:disabled {
+  display: none;
+}
+
+.detail__side--prev {
+  left: -12px;
+}
+
+.detail__side--next {
+  right: -12px;
+}
+
+@media (min-width: 820px) {
   .detail__side {
-    display: grid;
-    position: absolute;
-    top: 50%;
     width: 46px;
     height: 46px;
     font-size: 18px;
-    transform: translateY(-50%);
-    background: var(--paper);
+    box-shadow: none;
+  }
+
+  .detail__side:disabled {
+    display: grid;
   }
 
   .detail__side--prev {

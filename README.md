@@ -115,8 +115,8 @@ next one comes forward, and the one you pulled goes round to the back — the
 crate never runs out, it comes round again. Push up to bring the last one back.
 A quick flick goes through several. Tap the front record to open it, or the
 top of one behind to bring it straight to the front. On a computer, the scroll
-wheel and the arrow keys do the same. Each device remembers which view you
-last used. Tabs and filters still apply: the crate holds whatever the grid
+wheel and the arrow keys do the same. Every shelf opens on the grid; the other
+view is a tap away and stays put while you move around the site. Tabs and filters still apply: the crate holds whatever the grid
 would show.
 
 ## The bookshelf view (Books)
