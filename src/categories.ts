@@ -65,6 +65,11 @@ export interface Category {
    * flicked through) or the bookshelf (a row per tag, slid along).
    */
   altView?: 'crate' | 'shelf'
+  /**
+   * Where something newly added goes: the top of its list (the default), or
+   * the bottom — for a shelf kept in the order things were added.
+   */
+  newAt?: 'top' | 'bottom'
   /** The bookshelf's rows, top to bottom — tag values, in the order wanted. */
   shelfRows?: string[]
   /** An extra single-choice field, for shelves that want one. */
@@ -159,6 +164,7 @@ export const CATEGORIES: Category[] = [
     detailLabel: 'Edition',
     detailHint: 'Criterion #712',
     ratio: 2 / 3,
+    newAt: 'bottom',
     tagGroup: {
       label: 'Preferred format',
       labelWhenOwned: 'Format',

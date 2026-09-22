@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { getStore } from './backend'
 import { cloudConfigured, ownerConfigured } from './backend/config'
 import { signIn, signOut, watchViewer } from './backend/session'
@@ -15,7 +15,7 @@ import TopBar from './components/TopBar'
 import { go, isShareMode, shareUrl, useRoute } from './route'
 import { canLookUp, lookup } from './lookup'
 import { SAMPLES } from './samples'
-import type { Item, NewItem, Status } from './types'
+import { position, type Item, type NewItem, type Status } from './types'
 
 type Theme = 'light' | 'dark'
 
@@ -61,13 +61,39 @@ export default function App() {
     }
   }, [theme])
 
+  // Where a new item lands. The list is ordered by `position` (sort, or failing
+  // that newest first), so an item with no sort goes to the top by itself; one
+  // bound for the bottom is given a sort just past the last thing there. The
+  // last number handed out is remembered, because a pasted list adds faster
+  // than the shelf reloads, and each item must land after the one before.
+  const itemsNow = useRef(items)
+  useEffect(() => {
+    itemsNow.current = items
+  }, [items])
+  const lastBottom = useRef(new Map<string, number>())
+  const placed = useCallback((values: NewItem): NewItem => {
+    if (byId(values.category)?.newAt !== 'bottom') return values
+    const key = `${values.category}|${values.status}`
+    const here = itemsNow.current.filter(
+      (i) => i.category === values.category && i.status === values.status,
+    )
+    const last = Math.max(
+      ...here.map(position),
+      lastBottom.current.get(key) ?? -Infinity,
+    )
+    // An empty list needs no sort: the one item is both top and bottom.
+    if (!Number.isFinite(last)) return values
+    lastBottom.current.set(key, last + 1)
+    return { ...values, sort: last + 1 }
+  }, [])
+
   const add = useCallback(
     (values: NewItem) => {
-      void store.add(values)
+      void store.add(placed(values))
       setSide(values.status)
       go(`/c/${values.category}`)
     },
-    [store],
+    [store, placed],
   )
 
   const update = useCallback(
@@ -213,7 +239,7 @@ export default function App() {
             items={items}
             onAdd={async (values) => {
               setSide(values.status)
-              await store.add(values)
+              await store.add(placed(values))
             }}
             onUpdate={update}
           />
