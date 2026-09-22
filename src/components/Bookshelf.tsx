@@ -13,14 +13,16 @@ import Peek from './Peek'
  * round a book is trimmed away first. Each row scrolls
  * sideways with the phone's own swipe and momentum, the next cover peeking in
  * from the edge to say there's more; up and down moves between rows. Tap a
- * cover and its details, with the buy button, come up under that row.
+ * cover and its details, with the buy button, come up over it.
  */
 export default function Bookshelf({
   category,
   items,
+  onRemove,
 }: {
   category: Category
   items: Item[]
+  onRemove?: (id: string) => void
 }) {
   const order = category.shelfRows ?? category.tagGroup?.options ?? []
   const rows = order.map((tag) => ({
@@ -37,7 +39,13 @@ export default function Bookshelf({
       {rows
         .filter((row) => row.items.length > 0)
         .map((row) => (
-          <Shelf key={row.key} label={row.label} items={row.items} category={category} />
+          <Shelf
+            key={row.key}
+            label={row.label}
+            items={row.items}
+            category={category}
+            onRemove={onRemove}
+          />
         ))}
     </div>
   )
@@ -47,14 +55,16 @@ function Shelf({
   label,
   items,
   category,
+  onRemove,
 }: {
   label: string
   items: Item[]
   category: Category
+  onRemove?: (id: string) => void
 }) {
-  /** The book whose details are showing under the row, if any. */
+  /** The book showing its details over its cover, if any. */
   const [openId, setOpenId] = useState<string | null>(null)
-  const open = items.find((i) => i.id === openId)
+  const toggle = (id: string) => setOpenId((open) => (open === id ? null : id))
 
   return (
     <section className="case" aria-label={label}>
@@ -65,25 +75,35 @@ function Shelf({
 
       <div className="case__rail">
         {items.map((item) => (
-          <button
-            key={item.id}
-            className="case__book"
-            aria-expanded={item.id === openId}
-            data-open={item.id === openId || undefined}
-            onClick={() => setOpenId((id) => (id === item.id ? null : item.id))}
-          >
-            <BookCover item={item} />
-            <span className="case__title">{item.title}</span>
-            {item.creator && <span className="case__creator">{item.creator}</span>}
-          </button>
+          <div key={item.id} className="case__book" data-open={item.id === openId || undefined}>
+            <button
+              className="case__hit"
+              aria-expanded={item.id === openId}
+              onClick={() => toggle(item.id)}
+            >
+              <BookCover item={item} />
+              <span className="case__title">{item.title}</span>
+              {item.creator && <span className="case__creator">{item.creator}</span>}
+            </button>
+            {item.id === openId && (
+              <div
+                className="peekover case__peek"
+                onClick={(e) => {
+                  if (!(e.target as HTMLElement).closest('a, button')) toggle(item.id)
+                }}
+              >
+                <Peek
+                  item={item}
+                  category={category}
+                  onClose={() => toggle(item.id)}
+                  onRemove={onRemove}
+                  compact
+                />
+              </div>
+            )}
+          </div>
         ))}
       </div>
-
-      {open && (
-        <div className="case__details" key={open.id}>
-          <Peek item={open} category={category} onClose={() => setOpenId(null)} />
-        </div>
-      )}
     </section>
   )
 }

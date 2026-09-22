@@ -38,9 +38,11 @@ const mod = (a: number, n: number) => ((a % n) + n) % n
 export default function Crate({
   category,
   items,
+  onRemove,
 }: {
   category: Category
   items: Item[]
+  onRemove?: (id: string) => void
 }) {
   const n = items.length
   const [pos, setPos] = useState(0)
@@ -266,8 +268,8 @@ export default function Crate({
               {open && !moving && item.id === front.id && (
                 // The panel doesn't take the finger: a drag that starts on it
                 // still flicks the crate underneath.
-                <div className="crate__panel">
-                  <Peek item={item} category={category} onClose={shut} />
+                <div className="peekover crate__panel">
+                  <Peek item={item} category={category} onClose={shut} onRemove={onRemove} />
                 </div>
               )}
             </div>

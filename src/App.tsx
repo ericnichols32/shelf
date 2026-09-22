@@ -252,6 +252,7 @@ export default function App() {
             onStatus={setSide}
             onSeed={seed}
             onReorder={(id, sort) => update(id, { sort })}
+            onRemove={remove}
             seeding={seeding}
           />
         )}
@@ -286,7 +287,9 @@ export default function App() {
           existing={item}
           onSave={(values) => {
             update(item.id, values)
-            go(`/i/${item.id}`)
+            // Back to the shelf it's on — items open in place there now.
+            setSide(values.status)
+            go(`/c/${values.category}`)
           }}
         />
       ) : (

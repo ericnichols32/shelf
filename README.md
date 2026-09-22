@@ -105,6 +105,16 @@ Nothing is stored. A cut-out PNG runs to several hundred kilobytes, which would
 be far too much to keep per item, so it is redone from the original each time —
 about 30ms, and only for the covers actually on screen.
 
+## Tapping an item
+
+Tapping anything, on any shelf and in any view, doesn't leave the page: the
+item dims and its details come up over it — title, maker, price, and the shop
+button. In the grid and on the bookshelf the panel is the compact version;
+the crate's full-size sleeve also shows the tag and notes. When you're signed
+in, **Edit** and **Remove** are there too (Remove asks "Really remove?" first).
+Tap the dimmed item again, or Close, to put it away. Saving an edit brings you
+back to the shelf.
+
 ## The crate view (Vinyls)
 
 The two small icons at the top right of the Vinyls page switch between the grid

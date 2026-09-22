@@ -1,3 +1,4 @@
+import { useState } from 'react'
 import { buyLinks, tagLabel, type Category } from '../categories'
 import { useCanEdit } from '../edit'
 import { formatPrice } from '../price'
@@ -7,52 +8,60 @@ import type { Item } from '../types'
 /**
  * An item's details without leaving the shelf: what it is, and where to buy it.
  *
- * The crate and the bookshelf are for browsing, and being thrown onto another
- * page halfway through breaks that. So what the item's own page would say
- * comes up in place instead — over a record's sleeve, or under a shelf.
+ * Tapping anything on any shelf brings this up over the item itself, which
+ * dims behind it — in the grid, on the bookshelf, in the crate. Nobody is
+ * thrown onto another page mid-browse.
+ *
+ * `compact` is for the small places — a grid card, a book on the shelf — and
+ * keeps to what fits: the name, the price, the shop, and what you can do
+ * about it. The crate's full-size sleeve has room for the rest.
  */
 export default function Peek({
   item,
   category,
   onClose,
+  onRemove,
+  compact = false,
 }: {
   item: Item
   category: Category
   onClose: () => void
+  onRemove?: (id: string) => void
+  compact?: boolean
 }) {
   const canEdit = useCanEdit()
+  const [confirming, setConfirming] = useState(false)
   const links = buyLinks(item)
-  const facts = [
-    item.year,
-    item.detail,
-    item.status === 'wants' && item.price ? formatPrice(item.price) : '',
-  ].filter(Boolean)
+  const wants = item.status === 'wants'
+  const facts = compact
+    ? [wants && item.price ? formatPrice(item.price) : item.year].filter(Boolean)
+    : [item.year, item.detail, wants && item.price ? formatPrice(item.price) : ''].filter(Boolean)
 
   return (
-    <div className="peek">
+    <div className={`peek ${compact ? 'peek--compact' : ''}`}>
       <h2 className="peek__title">{item.title}</h2>
       {item.creator && <p className="peek__creator">{item.creator}</p>}
       {facts.length > 0 && <p className="peek__facts label">{facts.join(' · ')}</p>}
-      {item.tag && category.tagGroup && (
+      {!compact && item.tag && category.tagGroup && (
         <p className="peek__tag">
           <span className="label">{tagLabel(category, item.status)}</span>
           <span className="tagpill">{item.tag}</span>
         </p>
       )}
-      {item.notes && <p className="peek__notes">{item.notes}</p>}
+      {!compact && item.notes && <p className="peek__notes">{item.notes}</p>}
 
       {/* Nothing to go and do about something already on the shelf. */}
-      {item.status === 'wants' && links.primary.href && (
+      {wants && links.primary.href && (
         <>
-          {links.note && <p className="peek__note">{links.note}</p>}
+          {!compact && links.note && <p className="peek__note">{links.note}</p>}
           <a className="buy peek__buy" href={links.primary.href} target="_blank" rel="noreferrer">
             <span>
               {links.primary.label}
-              {item.price ? ` - ${formatPrice(item.price)}` : ''}
+              {!compact && item.price ? ` - ${formatPrice(item.price)}` : ''}
             </span>
             <span aria-hidden="true">&rarr;</span>
           </a>
-          {links.secondary && (
+          {!compact && links.secondary && (
             <a className="peek__second" href={links.secondary.href} target="_blank" rel="noreferrer">
               Or try {links.secondary.label} &rarr;
             </a>
@@ -64,6 +73,14 @@ export default function Peek({
         {canEdit && (
           <button className="linkish" onClick={() => go(`/i/${item.id}/edit`)}>
             Edit
+          </button>
+        )}
+        {canEdit && onRemove && (
+          <button
+            className={`linkish ${confirming ? 'peek__danger' : ''}`}
+            onClick={() => (confirming ? onRemove(item.id) : setConfirming(true))}
+          >
+            {confirming ? 'Really remove?' : 'Remove'}
           </button>
         )}
         <button className="linkish" onClick={onClose}>

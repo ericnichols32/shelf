@@ -278,11 +278,33 @@ select {
 
 /* A card is a photo in a white frame, propped slightly off true. */
 .card {
+  position: relative;
   display: block;
   width: 100%;
   text-align: left;
   transition: transform 0.25s ease;
   transform: rotate(var(--tilt, 0deg));
+}
+
+/* The tappable part of a card: the picture and its caption. */
+.card__hit {
+  display: block;
+  width: 100%;
+  text-align: left;
+}
+
+.card--open {
+  z-index: 3;
+}
+
+.peekover.card__peek {
+  padding: 8px;
+  overflow: visible;
+  /* A short card — a LEGO box — can have less room than the details need;
+     then the panel runs a little past the card's foot rather than hiding the
+     buttons in a scroll. */
+  bottom: auto;
+  min-height: 100%;
 }
 
 .card:hover {
@@ -1747,7 +1769,10 @@ select {
 
 /* ---- a record's details, over its own sleeve ---------------------------- */
 
-.crate__panel {
+/* An item's details over the item itself — a grid card, a book, a record.
+   The picture dims rather than disappears: you can still see which thing
+   you are reading about. */
+.peekover {
   position: absolute;
   inset: 0;
   z-index: 2;
@@ -1755,12 +1780,15 @@ select {
   align-items: center;
   justify-content: center;
   padding: 16px;
-  border-radius: 4px;
-  /* The artwork dims rather than disappears: you can still see which record
-     you are reading about. */
-  background: rgba(18, 14, 10, 0.66);
+  background: rgba(18, 14, 10, 0.7);
   backdrop-filter: blur(2px);
   animation: crate-panel 0.18s ease;
+  overflow-y: auto;
+  cursor: default;
+}
+
+.crate__panel {
+  border-radius: 4px;
   /* Not a scrolling box, and not a place a swipe belongs to. A panel that
      scrolls is one iOS claims the gesture for before any of this code hears
      about it, and the page slides instead of the crate flicking. */
@@ -1769,8 +1797,8 @@ select {
   cursor: grab;
 }
 
-/* Light words over the dimmed sleeve. */
-.crate__panel .peek {
+/* Light words over the dimmed picture. */
+.peekover .peek {
   --peek-ink: #f4ece0;
   --peek-soft: rgba(244, 236, 224, 0.72);
   --peek-accent: #e8b79a;
@@ -1861,12 +1889,61 @@ select {
   gap: 18px;
 }
 
+.peek__danger.linkish {
+  color: #ffb49e;
+}
+
 .peek__links .linkish {
   color: var(--peek-soft);
   font-family: var(--label);
   font-size: 11px;
   letter-spacing: 0.14em;
   text-transform: uppercase;
+}
+
+/* The small version, for a grid card or a book on the shelf. */
+.peek--compact .peek__title {
+  font-size: 15px;
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  overflow: hidden;
+}
+
+.peek--compact .peek__creator {
+  margin-top: 3px;
+  font-size: 13px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.peek--compact .peek__facts {
+  margin-top: 6px;
+}
+
+.buy.peek__buy {
+  word-break: break-word;
+}
+
+.peek--compact .buy.peek__buy {
+  margin-top: 8px;
+  padding: 8px 10px;
+  gap: 6px;
+  font-size: 10px;
+  letter-spacing: 0.08em;
+  text-align: left;
+}
+
+.peek--compact .peek__links {
+  margin-top: 8px;
+  gap: 4px 10px;
+  flex-wrap: wrap;
+}
+
+.peek--compact .peek__links .linkish {
+  font-size: 10px;
+  letter-spacing: 0.1em;
 }
 
 @keyframes crate-panel {
@@ -1926,13 +2003,24 @@ select {
 }
 
 .case__book {
+  position: relative;
   flex: none;
+  scroll-snap-align: start;
+}
+
+.case__hit {
   display: flex;
   flex-direction: column;
   align-items: flex-start;
   text-align: left;
-  scroll-snap-align: start;
   cursor: pointer;
+}
+
+.peekover.case__peek {
+  padding: 8px;
+  overflow: visible;
+  bottom: auto;
+  min-height: 100%;
 }
 
 .case__cover {
@@ -1998,18 +2086,3 @@ select {
   max-width: 100%;
 }
 
-.case__details {
-  margin-top: 14px;
-  padding: 18px 16px;
-  background: var(--raised);
-  border: 1px solid var(--sand);
-  border-radius: var(--radius);
-  box-shadow: var(--shadow-card);
-  animation: crate-panel 0.18s ease;
-}
-
-@media (prefers-reduced-motion: reduce) {
-  .case__details {
-    animation: none;
-  }
-}

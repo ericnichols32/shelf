@@ -16,6 +16,7 @@ export default function CategoryView({
   onStatus,
   onSeed,
   onReorder,
+  onRemove,
   seeding,
 }: {
   category: Category
@@ -24,6 +25,7 @@ export default function CategoryView({
   onStatus: (status: Status) => void
   onSeed: () => void
   onReorder: (id: string, sort: number) => void
+  onRemove: (id: string) => void
   seeding: boolean
 }) {
   /** Which tag the feed is narrowed to, or null for all of them. */
@@ -34,6 +36,8 @@ export default function CategoryView({
   const bookshelf = category.altView === 'shelf' && view === 'shelf'
   const alt = crate || bookshelf
   const [tag, setTag] = useState<string | null>(null)
+  /** The grid card showing its details, if any — one at a time. */
+  const [openId, setOpenId] = useState<string | null>(null)
   /** Arranging the list by hand. Only ever offered to whoever may edit. */
   const [arranging, setArranging] = useState(false)
   useEffect(() => setArranging(false), [category.id, status])
@@ -159,15 +163,27 @@ export default function CategoryView({
       {arranging ? (
         <ArrangeList items={onThisSide} onReorder={onReorder} />
       ) : onThisSide.length > 0 && bookshelf ? (
-        <Bookshelf category={category} items={onThisSide} />
+        <Bookshelf category={category} items={onThisSide} onRemove={onRemove} />
       ) : shown.length > 0 && crate ? (
         // A different list — another side, another filter — starts again
         // at the front of the crate.
-        <Crate key={shown.map((i) => i.id).join()} category={category} items={shown} />
+        <Crate
+          key={shown.map((i) => i.id).join()}
+          category={category}
+          items={shown}
+          onRemove={onRemove}
+        />
       ) : shown.length > 0 ? (
         <div className="feed">
           {shown.map((item, i) => (
-            <ItemCard key={item.id} item={item} index={i} />
+            <ItemCard
+              key={item.id}
+              item={item}
+              index={i}
+              open={item.id === openId}
+              onToggle={() => setOpenId((id) => (id === item.id ? null : item.id))}
+              onRemove={onRemove}
+            />
           ))}
         </div>
       ) : (
