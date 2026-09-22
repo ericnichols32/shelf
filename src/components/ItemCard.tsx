@@ -42,7 +42,13 @@ export default function ItemCard({
           <Cover item={item} category={category} className="card__art" />
           {/* Not out yet: say when, rather than let it look like the rest. */}
           {isUpcoming(item.released) && (
-            <span className="card__soon label">{shortWhen(item.released!)}</span>
+            <span className="card__soon" aria-hidden="true">
+              <span className="card__soon-text label">{shortWhen(item.released!)}</span>
+            </span>
+          )}
+          {/* The flag is a picture; the words still have to be readable aloud. */}
+          {isUpcoming(item.released) && (
+            <span className="sr-only">Out {shortWhen(item.released!)}</span>
           )}
         </span>
         <span className="card__caption">

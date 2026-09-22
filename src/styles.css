@@ -16,6 +16,8 @@
   --sand-deep: #c9bba4;
   --accent: #b6582f;
   --accent-soft: #f0e2d8;
+  /* The corner flag on something not out yet. */
+  --flag: #c0342a;
 
   --shadow-card: 0 1px 2px rgba(43, 38, 33, 0.06), 0 8px 24px rgba(43, 38, 33, 0.08);
   --shadow-float: 0 2px 6px rgba(43, 38, 33, 0.1), 0 12px 32px rgba(43, 38, 33, 0.16);
@@ -40,6 +42,7 @@
   --sand-deep: #4a4238;
   --accent: #d9793f;
   --accent-soft: #3a2a1e;
+  --flag: #d2453a;
 
   --shadow-card: 0 1px 2px rgba(0, 0, 0, 0.4), 0 8px 24px rgba(0, 0, 0, 0.45);
   --shadow-float: 0 2px 6px rgba(0, 0, 0, 0.5), 0 12px 32px rgba(0, 0, 0, 0.55);
@@ -2100,23 +2103,38 @@ select {
 /* ---- not out yet -------------------------------------------------------- */
 
 /* A corner flag on a cover: the month it arrives, so a pre-order never looks
-   like something already on the shelves. */
+   like something already on the shelves. A triangle folded over the top-right
+   corner, with the date reading along its edge. */
 .card__soon {
   position: absolute;
   top: 8px;
-  left: 8px;
+  right: 8px;
   z-index: 1;
-  padding: 4px 7px;
-  background: var(--ink);
-  color: var(--paper);
-  font-size: 9px;
-  border-radius: 2px;
+  width: 76px;
+  height: 76px;
+  overflow: hidden;
+  pointer-events: none;
+  clip-path: polygon(100% 0, 100% 100%, 0 0);
+  background: var(--flag);
 }
 
 .card__frame--bare .card__soon,
 .card__frame--flat .card__soon {
   top: 0;
-  left: 0;
+  right: 0;
+}
+
+.card__soon-text {
+  /* Along the flag's long edge: the middle of the line has to sit inside the
+     triangle, or the clip takes the words with the corner. */
+  position: absolute;
+  top: 26px;
+  right: -26px;
+  width: 100px;
+  text-align: center;
+  transform: rotate(45deg);
+  color: #fff;
+  font-size: 9px;
 }
 
 .detail__soon {
