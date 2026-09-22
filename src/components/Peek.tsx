@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { buyLinks, tagLabel, type Category } from '../categories'
 import { useCanEdit } from '../edit'
 import { formatPrice } from '../price'
+import { isUpcoming, longWhen, shortWhen } from '../released'
 import { go } from '../route'
 import type { Item } from '../types'
 
@@ -34,9 +35,18 @@ export default function Peek({
   const links = buyLinks(item)
   const wants = item.status === 'wants'
   const version = !wants ? item.version : ''
+  const soon = isUpcoming(item.released)
   const facts = compact
-    ? [wants && item.price ? formatPrice(item.price) : item.year, version].filter(Boolean)
-    : [item.year, item.detail, version, wants && item.price ? formatPrice(item.price) : ''].filter(Boolean)
+    ? [
+        soon ? shortWhen(item.released!) : wants && item.price ? formatPrice(item.price) : item.year,
+        version,
+      ].filter(Boolean)
+    : [
+        soon ? longWhen(item.released!) : item.year,
+        item.detail,
+        version,
+        wants && item.price ? formatPrice(item.price) : '',
+      ].filter(Boolean)
 
   return (
     <div className={`peek ${compact ? 'peek--compact' : ''}`}>
@@ -57,6 +67,7 @@ export default function Peek({
           {!compact && links.note && <p className="peek__note">{links.note}</p>}
           <a className="buy peek__buy" href={links.primary.href} target="_blank" rel="noreferrer">
             <span>
+              {soon && item.preorder ? 'Pre-order · ' : ''}
               {links.primary.label}
               {!compact && item.price ? ` - ${formatPrice(item.price)}` : ''}
             </span>

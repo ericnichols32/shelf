@@ -27,6 +27,14 @@ export interface Item {
    * of a game you have, Digital or Physical. Blank on a wish list.
    */
   version: string
+  /**
+   * The day it comes out, as YYYY-MM-DD, when that is still ahead — a game on
+   * pre-order. Synced from the shop; the shelf shows it instead of pretending
+   * the thing is there to be bought today.
+   */
+  released?: string
+  /** The shop will take the money now, ahead of that day. */
+  preorder?: boolean
   /** Image URL for the cover. Blank is fine; the card draws a typographic one. */
   cover: string
   /** Drop the white background out of the cover, leaving the box on the page. */

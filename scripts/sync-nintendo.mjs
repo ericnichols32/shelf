@@ -79,11 +79,17 @@ async function fetchGames(skus) {
       const price = p.prices?.finalPrice
       games.push({
         sku: p.sku,
-        name: clean(p.name),
+        name: clean(p.name).replace(/\s*\((coming soon|pre-?order)\)\s*$/i, ''),
         publisher: unshout(clean(p.softwarePublisher)),
         console: p.platform?.label ?? '',
         year: (p.releaseDate ?? '').slice(0, 4),
         cover: p.productImageSquare?.url ?? '',
+        // The day it comes out. Anything still ahead is a pre-order, and the
+        // shelf says so rather than showing it as something you can go buy.
+        released: (p.releaseDate ?? '').slice(0, 10),
+        // Nintendo says which of the unreleased ones it will take money for
+        // now: ["Pre-order","Coming soon"] against a bare ["Coming soon"].
+        preorder: (p.availability ?? []).includes('Pre-order'),
         link: `https://www.nintendo.com/us/store/products/${p.urlKey}`,
         price: typeof price === 'number' ? Math.round(price * 100) : null,
       })
@@ -100,11 +106,18 @@ export function plan(games, shelf) {
     remove: shelf.filter(
       (i) => i.source === SOURCE && i.status === 'wants' && !onList.has(i.ref),
     ),
+    // Prices move — sales, increases — and a release date can slip, so both
+    // are brought into line on every run for games this script knows.
     reprice: shelf
       .filter((i) => i.source === SOURCE)
       .map((i) => {
-        const now = games.find((g) => g.sku === i.ref)?.price
-        return now != null && now !== i.price ? { id: i.id, ref: i.ref, from: i.price, to: now } : null
+        const g = games.find((g) => g.sku === i.ref)
+        if (!g) return null
+        const patch = {}
+        if (g.price != null && g.price !== i.price) patch.price = g.price
+        if (g.released && g.released !== i.released) patch.released = g.released
+        if (g.preorder !== i.preorder) patch.preorder = g.preorder
+        return Object.keys(patch).length ? { id: i.id, ref: i.ref, from: i.price, to: g.price, patch } : null
       })
       .filter(Boolean),
   }
@@ -122,6 +135,8 @@ const toItem = (g) => ({
   // Square key art, full to the edges: nothing to cut out.
   cover: g.cover,
   cutout: false,
+  released: g.released,
+  preorder: g.preorder,
   ref: g.sku,
   link: g.link,
   notes: '',
@@ -155,14 +170,16 @@ async function main() {
   const { add, remove, reprice } = plan(games, shelf)
   for (const g of add) log(`  + ${g.name}  [${g.console}]  ${cents(g.price)}`)
   for (const i of remove) log(`  − ${i.ref}  (no longer on the wish list)`)
-  for (const r of reprice) log(`  $ ${r.ref}  ${cents(r.from)} → ${cents(r.to)}`)
+  for (const r of reprice) {
+    log(`  $ ${r.ref}  ${Object.keys(r.patch).join(', ')} updated`)
+  }
   if (!add.length && !remove.length && !reprice.length) log('  nothing to change')
   if (DRY) return
 
   const col = db.collection('shelfItems')
   for (const g of add) await col.doc(`nintendo-${g.sku}`).set(toItem(g))
   for (const i of remove) await col.doc(i.id).delete()
-  for (const r of reprice) await col.doc(r.id).update({ price: r.to })
+  for (const r of reprice) await col.doc(r.id).update(r.patch)
   if (add.length || remove.length || reprice.length) {
     log(`nintendo: added ${add.length}, removed ${remove.length}, repriced ${reprice.length}`)
   }

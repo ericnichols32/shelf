@@ -43,6 +43,8 @@ export async function readShelf(category) {
         status: v('status'),
         code: v('detail'),
         ref: v('ref'),
+        released: v('released'),
+        preorder: f.preorder?.booleanValue ?? false,
         source: v('source'),
         price: price == null ? null : Number(price),
       })

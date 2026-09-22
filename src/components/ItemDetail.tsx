@@ -5,6 +5,7 @@ import { useCanEdit } from '../edit'
 import type { Item } from '../types'
 import Cover from './Cover'
 import { formatPrice } from '../price'
+import { isUpcoming, longWhen } from '../released'
 
 export default function ItemDetail({
   item,
@@ -91,7 +92,11 @@ export default function ItemDetail({
               {category.creatorLabel}: {item.creator}
             </span>
           )}
-          {item.year && <span className="label">{item.year}</span>}
+          {isUpcoming(item.released) ? (
+            <span className="label detail__soon">{longWhen(item.released!)}</span>
+          ) : (
+            item.year && <span className="label">{item.year}</span>
+          )}
           {item.detail && (
             <span className="label">
               {category.detailLabel}: {item.detail}

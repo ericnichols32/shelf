@@ -314,6 +314,7 @@ select {
 /* These are spans so the whole card can stay a single <button>; they need
    telling to behave as blocks. */
 .card__frame {
+  position: relative;
   display: block;
   background: var(--raised);
   padding: 8px;
@@ -2095,3 +2096,29 @@ select {
   max-width: 100%;
 }
 
+
+/* ---- not out yet -------------------------------------------------------- */
+
+/* A corner flag on a cover: the month it arrives, so a pre-order never looks
+   like something already on the shelves. */
+.card__soon {
+  position: absolute;
+  top: 8px;
+  left: 8px;
+  z-index: 1;
+  padding: 4px 7px;
+  background: var(--ink);
+  color: var(--paper);
+  font-size: 9px;
+  border-radius: 2px;
+}
+
+.card__frame--bare .card__soon,
+.card__frame--flat .card__soon {
+  top: 0;
+  left: 0;
+}
+
+.detail__soon {
+  color: var(--accent);
+}

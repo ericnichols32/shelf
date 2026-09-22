@@ -2,6 +2,7 @@ import { byId } from '../categories'
 import type { Item } from '../types'
 import Cover from './Cover'
 import Peek from './Peek'
+import { isUpcoming, shortWhen } from '../released'
 import { formatPrice } from '../price'
 
 /** Rotations cycle so a column of cards never repeats the same lean. */
@@ -39,6 +40,10 @@ export default function ItemCard({
           className={`card__frame ${item.cutout ? 'card__frame--bare' : category.frameless ? 'card__frame--flat' : ''}`}
         >
           <Cover item={item} category={category} className="card__art" />
+          {/* Not out yet: say when, rather than let it look like the rest. */}
+          {isUpcoming(item.released) && (
+            <span className="card__soon label">{shortWhen(item.released!)}</span>
+          )}
         </span>
         <span className="card__caption">
           <b>{item.title}</b>
