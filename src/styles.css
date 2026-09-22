@@ -2102,41 +2102,17 @@ select {
 
 /* ---- not out yet -------------------------------------------------------- */
 
-/* A corner flag on a cover: the month it arrives, so a pre-order never looks
-   like something already on the shelves. A triangle folded over the top-right
-   corner, with the date reading along its edge. */
-.card__soon {
-  position: absolute;
-  top: 8px;
-  right: 8px;
-  z-index: 1;
-  width: 76px;
-  height: 76px;
-  overflow: hidden;
-  pointer-events: none;
-  clip-path: polygon(100% 0, 100% 100%, 0 0);
-  background: var(--flag);
+/* Not out yet: the date after the price, in red. */
+.card__soon,
+.peek__soon {
+  color: var(--flag);
 }
 
-.card__frame--bare .card__soon,
-.card__frame--flat .card__soon {
-  top: 0;
-  right: 0;
-}
-
-.card__soon-text {
-  /* Along the flag's long edge: the middle of the line has to sit inside the
-     triangle, or the clip takes the words with the corner. */
-  position: absolute;
-  top: 26px;
-  right: -26px;
-  width: 100px;
-  text-align: center;
-  transform: rotate(45deg);
-  color: #fff;
-  font-size: 9px;
+/* Over a dimmed cover the deep red goes muddy; this one reads. */
+.peekover .peek__soon {
+  color: #ff9c8b;
 }
 
 .detail__soon {
-  color: var(--accent);
+  color: var(--flag);
 }

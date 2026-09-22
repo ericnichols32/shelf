@@ -37,22 +37,27 @@ export default function Peek({
   const version = !wants ? item.version : ''
   const soon = isUpcoming(item.released)
   const facts = compact
-    ? [
-        soon ? shortWhen(item.released!) : wants && item.price ? formatPrice(item.price) : item.year,
-        version,
-      ].filter(Boolean)
-    : [
-        soon ? longWhen(item.released!) : item.year,
-        item.detail,
-        version,
-        wants && item.price ? formatPrice(item.price) : '',
-      ].filter(Boolean)
+    ? [wants && item.price ? formatPrice(item.price) : item.year, version].filter(Boolean)
+    : [item.year, item.detail, version, wants && item.price ? formatPrice(item.price) : ''].filter(
+        Boolean,
+      )
 
   return (
     <div className={`peek ${compact ? 'peek--compact' : ''}`}>
       <h2 className="peek__title">{item.title}</h2>
       {item.creator && <p className="peek__creator">{item.creator}</p>}
-      {facts.length > 0 && <p className="peek__facts label">{facts.join(' · ')}</p>}
+      {(facts.length > 0 || soon) && (
+        <p className="peek__facts label">
+          {facts.join(' · ')}
+          {/* Not out yet: when it arrives, after the price, in red. */}
+          {soon && (
+            <span className="peek__soon">
+              {facts.length > 0 ? ' · ' : ''}
+              {compact ? shortWhen(item.released!) : longWhen(item.released!)}
+            </span>
+          )}
+        </p>
+      )}
       {!compact && item.tag && category.tagGroup && (
         <p className="peek__tag">
           <span className="label">{tagLabel(category, item.status)}</span>

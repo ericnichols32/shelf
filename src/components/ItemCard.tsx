@@ -40,16 +40,6 @@ export default function ItemCard({
           className={`card__frame ${item.cutout ? 'card__frame--bare' : category.frameless ? 'card__frame--flat' : ''}`}
         >
           <Cover item={item} category={category} className="card__art" />
-          {/* Not out yet: say when, rather than let it look like the rest. */}
-          {isUpcoming(item.released) && (
-            <span className="card__soon" aria-hidden="true">
-              <span className="card__soon-text label">{shortWhen(item.released!)}</span>
-            </span>
-          )}
-          {/* The flag is a picture; the words still have to be readable aloud. */}
-          {isUpcoming(item.released) && (
-            <span className="sr-only">Out {shortWhen(item.released!)}</span>
-          )}
         </span>
         <span className="card__caption">
           <b>{item.title}</b>
@@ -73,6 +63,10 @@ export default function ItemCard({
               {item.status === 'wants' && item.price ? (
                 <> / {formatPrice(item.price)}</>
               ) : null}
+              {/* Not out yet: when it arrives, after the price, in red. */}
+              {isUpcoming(item.released) && (
+                <span className="card__soon"> / {shortWhen(item.released!)}</span>
+              )}
             </>
           ) : (
             <>
@@ -85,6 +79,9 @@ export default function ItemCard({
                 item.year && <> / {item.year}</>
               )}
               {item.status === 'owns' && item.version && <> / {item.version}</>}
+              {isUpcoming(item.released) && (
+                <span className="card__soon"> / {shortWhen(item.released!)}</span>
+              )}
             </>
           )}
         </span>

@@ -108,11 +108,11 @@ about 30ms, and only for the covers actually on screen.
 ## Things that aren't out yet
 
 Nintendo says when each game arrives, and whether it will take money for it
-yet, so the sync keeps both. A game still to come wears the month on the corner
-of its cover — "Feb 2027", or just the year where the shop has only given one
-(a date of 31 December means "sometime that year", not December). Its details
-say "Out 12 February 2027", and where Nintendo is taking pre-orders the buy
-button reads "Pre-order · Nintendo". A game merely announced keeps the plain
+yet, so the sync keeps both. A game still to come says when, in red, after the
+price in its caption — "Feb 2027", or just the year where the shop has only
+given one (a date of 31 December means "sometime that year", not December).
+Its details say "Out 12 February 2027", and where Nintendo is taking pre-orders
+the buy button reads "Pre-order · Nintendo". A game merely announced keeps the plain
 button. Both are checked again on every run, so a date that slips follows.
 
 ## Tapping an item
