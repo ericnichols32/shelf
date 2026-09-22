@@ -112,7 +112,13 @@ export default function ItemForm({
   const submit = (e: React.FormEvent) => {
     e.preventDefault()
     if (!values.title.trim()) return
-    onSave({ ...values, title: values.title.trim(), category: category.id })
+    onSave({
+      ...values,
+      title: values.title.trim(),
+      category: category.id,
+      // Only something owned has a version; a wish is for the game, not a copy.
+      version: values.status === 'owns' ? (values.version ?? '') : '',
+    })
   }
 
   return (
@@ -193,6 +199,26 @@ export default function ItemForm({
                 onClick={() =>
                   setValues((v) => ({ ...v, tag: on ? '' : option }))
                 }
+              >
+                {option}
+              </button>
+            )
+          })}
+        </fieldset>
+      )}
+
+      {category.ownedGroup && values.status === 'owns' && (
+        <fieldset className="chips">
+          <legend className="label">{category.ownedGroup.label}</legend>
+          {category.ownedGroup.options.map((option) => {
+            const on = values.version === option
+            return (
+              <button
+                key={option}
+                type="button"
+                className={`chip ${on ? 'chip--on' : ''}`}
+                aria-pressed={on}
+                onClick={() => setValues((v) => ({ ...v, version: on ? '' : option }))}
               >
                 {option}
               </button>

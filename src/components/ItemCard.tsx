@@ -55,6 +55,7 @@ export default function ItemCard({
             <>
               {' / '}
               {item.tag}
+              {item.status === 'owns' && item.version && <> / {item.version}</>}
               {/* A price is worth showing on a wish list whatever else the
                   caption carries — a synced game reads title / console / price,
                   the way a LEGO set reads title / theme / price. */}
@@ -72,6 +73,7 @@ export default function ItemCard({
               ) : (
                 item.year && <> / {item.year}</>
               )}
+              {item.status === 'owns' && item.version && <> / {item.version}</>}
             </>
           )}
         </span>

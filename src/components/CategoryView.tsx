@@ -36,6 +36,8 @@ export default function CategoryView({
   const bookshelf = category.altView === 'shelf' && view === 'shelf'
   const alt = crate || bookshelf
   const [tag, setTag] = useState<string | null>(null)
+  /** Which owned version the Collection is narrowed to — Digital, Physical. */
+  const [version, setVersion] = useState<string | null>(null)
   /** The grid card showing its details, if any — one at a time. */
   const [openId, setOpenId] = useState<string | null>(null)
   /** Arranging the list by hand. Only ever offered to whoever may edit. */
@@ -43,6 +45,8 @@ export default function CategoryView({
   useEffect(() => setArranging(false), [category.id, status])
   // A tag from one shelf means nothing on the next.
   useEffect(() => setTag(null), [category.id])
+  // Versions belong to the Collection; leaving it lets the filter go.
+  useEffect(() => setVersion(null), [category.id, status])
 
   const mine = items.filter((i) => i.category === category.id)
   const counts = {
@@ -71,7 +75,20 @@ export default function CategoryView({
     ? category.creatorLabel
     : category.tagGroup?.label
 
-  const shown = tag ? onThisSide.filter((i) => keyOf(i) === tag) : onThisSide
+  const shown = onThisSide
+    .filter((i) => !tag || keyOf(i) === tag)
+    .filter((i) => !version || i.version === version)
+
+  // A second row of filters, for the Collection on shelves that ask which
+  // version you own — shown once anything has been given one.
+  const versionFilter =
+    status === 'owns' &&
+    category.ownedGroup &&
+    !arranging &&
+    !bookshelf &&
+    onThisSide.some((i) => i.version)
+      ? category.ownedGroup
+      : null
 
   return (
     <>
@@ -159,6 +176,29 @@ export default function CategoryView({
           </button>
         )}
       </div>
+
+      {versionFilter && (
+        <nav className="filters filters--second" aria-label={`Filter by ${versionFilter.label}`}>
+          <span className="filters__label label">{versionFilter.label}:</span>
+          {[null, ...versionFilter.options].map((option) => {
+            const count = option
+              ? onThisSide.filter((i) => i.version === option).length
+              : onThisSide.length
+            if (!count) return null
+            return (
+              <button
+                key={option ?? 'all'}
+                className="filter"
+                aria-pressed={version === option}
+                onClick={() => setVersion(option)}
+              >
+                {option ?? 'All'}
+                <span className="filter__count">{count}</span>
+              </button>
+            )
+          })}
+        </nav>
+      )}
 
       {arranging ? (
         <ArrangeList items={onThisSide} onReorder={onReorder} />

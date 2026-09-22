@@ -22,6 +22,11 @@ export interface Item {
    * Category.tagGroup.
    */
   tag: string
+  /**
+   * A second choice, for owned things on shelves that ask one — which version
+   * of a game you have, Digital or Physical. Blank on a wish list.
+   */
+  version: string
   /** Image URL for the cover. Blank is fine; the card draws a typographic one. */
   cover: string
   /** Drop the white background out of the cover, leaving the box on the page. */
@@ -81,6 +86,7 @@ export const EMPTY_ITEM: NewItem = {
   year: '',
   detail: '',
   tag: '',
+  version: '',
   cover: '',
   cutout: false,
   ref: '',

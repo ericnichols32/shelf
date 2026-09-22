@@ -1029,6 +1029,15 @@ select {
   min-width: 0;
 }
 
+/* The second row — Owned version on Video Games — sits just under the first. */
+.filters--second {
+  margin: -6px 0 18px;
+}
+
+.filters__label {
+  color: var(--faint);
+}
+
 .filter {
   font-family: var(--label);
   font-size: 11px;

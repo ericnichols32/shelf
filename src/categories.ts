@@ -66,6 +66,14 @@ export interface Category {
    */
   altView?: 'crate' | 'shelf'
   /**
+   * A second single choice asked only of things already owned — the version
+   * of a game you have. Its own filter row appears on the Collection side.
+   */
+  ownedGroup?: {
+    label: string
+    options: string[]
+  }
+  /**
    * Where something newly added goes: the top of its list (the default), or
    * the bottom — for a shelf kept in the order things were added.
    */
@@ -268,6 +276,10 @@ export const CATEGORIES: Category[] = [
     tagGroup: {
       label: 'Console',
       options: ['Nintendo Switch', 'Nintendo Switch 2'],
+    },
+    ownedGroup: {
+      label: 'Owned version',
+      options: ['Digital', 'Physical'],
     },
     buyHeading: 'Where to buy',
     links: (i) => ({

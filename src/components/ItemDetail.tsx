@@ -97,6 +97,11 @@ export default function ItemDetail({
               {category.detailLabel}: {item.detail}
             </span>
           )}
+          {category.ownedGroup && item.status === 'owns' && item.version && (
+            <span className="label">
+              {category.ownedGroup.label}: {item.version}
+            </span>
+          )}
         </div>
         {/*
           On its own line rather than in the row above. Sharing the row meant

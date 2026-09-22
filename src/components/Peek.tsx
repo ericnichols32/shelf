@@ -33,9 +33,10 @@ export default function Peek({
   const [confirming, setConfirming] = useState(false)
   const links = buyLinks(item)
   const wants = item.status === 'wants'
+  const version = !wants ? item.version : ''
   const facts = compact
-    ? [wants && item.price ? formatPrice(item.price) : item.year].filter(Boolean)
-    : [item.year, item.detail, wants && item.price ? formatPrice(item.price) : ''].filter(Boolean)
+    ? [wants && item.price ? formatPrice(item.price) : item.year, version].filter(Boolean)
+    : [item.year, item.detail, version, wants && item.price ? formatPrice(item.price) : ''].filter(Boolean)
 
   return (
     <div className={`peek ${compact ? 'peek--compact' : ''}`}>
