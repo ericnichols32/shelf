@@ -13,6 +13,15 @@ there is nothing to go and do.
 The orange plus is on every page, the home page included; from there it asks
 which shelf first.
 
+## The icon
+
+`public/icon.svg` is the mark: three book spines standing on a shelf, the last
+one leaning, in the site's terracotta and paper. It is drawn at 32×32 so it
+still reads in a browser tab. `apple-touch-icon.png` (180×180, square, since
+iOS rounds the corners itself) is what a Home Screen shortcut shows, and
+`favicon-32.png` covers browsers that won't take an SVG. To change the mark,
+edit the SVG and re-render the two PNGs from it.
+
 ## Running it
 
 ```sh

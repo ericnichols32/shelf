@@ -1,0 +1,13 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32" role="img" aria-label="A shelf of books">
+  <title>Eric's Collection &amp; Wish List</title>
+  <!-- The site's terracotta and its paper: the same two colours as the page. -->
+  <rect width="32" height="32" rx="7" fill="#b6582f" />
+  <g fill="#faf8f4">
+    <!-- Three spines standing on a shelf, the last leaning, so at the size of a
+         browser tab it reads as books rather than as a bar chart. -->
+    <rect x="6.5" y="9" width="4.2" height="15" rx="1" />
+    <rect x="12" y="6.5" width="4.2" height="17.5" rx="1" />
+    <rect x="17.5" y="8" width="4.2" height="16" rx="1" transform="rotate(9 19.6 24)" />
+    <rect x="4.5" y="25" width="23" height="2.6" rx="1.3" />
+  </g>
+</svg>
